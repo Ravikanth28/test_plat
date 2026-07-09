@@ -1,7 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
-import { CATEGORIES, catIcon, rupee } from "../utils.js";
+import {
+  CATEGORIES,
+  catIcon,
+  catLabel,
+  rupee,
+  isImageUrl,
+  tileGradient,
+  deliveryTime,
+} from "../utils.js";
+
+function Thumb({ image, fallback, className, style, children }) {
+  return (
+    <div className={className} style={style}>
+      {isImageUrl(image) ? (
+        <img src={image} alt="" loading="lazy" />
+      ) : (
+        <span>{image || fallback}</span>
+      )}
+      {children}
+    </div>
+  );
+}
 
 export default function Home() {
   const [shops, setShops] = useState([]);
@@ -42,13 +63,13 @@ export default function Home() {
     <div>
       <div className="hero">
         <div className="container">
-          <h1>Order from shops near you</h1>
-          <p style={{ margin: 0, opacity: 0.95 }}>
-            Department stores, medical, stationery, juice & food — delivered fast.
+          <h1>Groceries, food & essentials — delivered fast</h1>
+          <p className="sub">
+            From department stores, pharmacies, juice bars, restaurants & more near you.
           </p>
           <form className="search-bar" onSubmit={runSearch}>
             <input
-              placeholder="Search for items (e.g. paracetamol, dosa, pen)..."
+              placeholder='Search "paracetamol", "dosa", "milk", "pens"...'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -81,8 +102,16 @@ export default function Home() {
             ) : (
               <div className="grid grid-4 mt">
                 {products.map((p) => (
-                  <Link to={`/shop/${p.shop._id}`} key={p._id} className="card">
-                    <div className="badge badge-cat">{catIcon(p.shop.category)} {p.shop.name}</div>
+                  <Link to={`/shop/${p.shop._id}`} key={p._id} className="card result-card">
+                    <Thumb
+                      className="result-thumb"
+                      image={p.image}
+                      fallback={catIcon(p.shop.category)}
+                      style={{ background: tileGradient(p.name) }}
+                    />
+                    <div className="badge badge-cat">
+                      {catIcon(p.shop.category)} {p.shop.name}
+                    </div>
                     <h4 style={{ margin: "10px 0 4px" }}>{p.name}</h4>
                     <div className="price">{rupee(p.price)}</div>
                     <div className="muted small">Tap to view shop</div>
@@ -93,44 +122,58 @@ export default function Home() {
           </>
         )}
 
-        <div className="chips">
+        <h2 className="section-title">Shop by category</h2>
+        <div className="cat-scroll">
           {CATEGORIES.map((c) => (
             <button
               key={c.key}
-              className={`chip ${category === c.key ? "active" : ""}`}
+              className={`cat-tile ${category === c.key ? "active" : ""}`}
               onClick={() => setCategory(c.key)}
             >
-              {c.icon} {c.label}
+              <span className="ico">{c.icon}</span>
+              <span className="lbl">{c.label}</span>
             </button>
           ))}
         </div>
 
         <h2 className="section-title">
-          {category === "all" ? "All Shops" : CATEGORIES.find((c) => c.key === category)?.label + " Shops"}
+          {category === "all" ? "All shops near you" : catLabel(category) + " shops"}
         </h2>
 
         {loading ? (
-          <div className="loading">Loading shops...</div>
+          <div className="loading">Loading shops…</div>
         ) : shops.length === 0 ? (
-          <p className="muted">No shops available in this category yet.</p>
+          <div className="empty">
+            <div className="big">🛍️</div>
+            <p>No shops available in this category yet.</p>
+          </div>
         ) : (
           <div className="grid grid-3">
             {shops.map((s) => (
               <Link to={`/shop/${s._id}`} key={s._id} className="card shop-card">
-                <div className="shop-thumb">{catIcon(s.category)}</div>
-                <div className="row between">
-                  <h3 style={{ margin: 0 }}>{s.name}</h3>
-                  <span className="badge badge-green">★ {s.rating}</span>
+                <Thumb
+                  className="shop-thumb"
+                  image={s.image}
+                  fallback={catIcon(s.category)}
+                  style={{ background: tileGradient(s.name) }}
+                >
+                  <span className="eta">🕒 {deliveryTime(s._id)} min</span>
+                </Thumb>
+                <div className="shop-body">
+                  <div className="row between gap">
+                    <h3>{s.name}</h3>
+                    <span className="rating-pill">★ {s.rating}</span>
+                  </div>
+                  <div>
+                    <span className="badge badge-cat">{catLabel(s.category)}</span>
+                  </div>
+                  <p className="muted small" style={{ margin: "2px 0 0" }}>
+                    {s.description}
+                  </p>
+                  <p className="muted small" style={{ margin: 0 }}>
+                    📍 {s.address}
+                  </p>
                 </div>
-                <div className="badge badge-cat mt" style={{ marginTop: 6 }}>
-                  {s.category}
-                </div>
-                <p className="muted small" style={{ marginBottom: 4 }}>
-                  {s.description}
-                </p>
-                <p className="muted small" style={{ margin: 0 }}>
-                  📍 {s.address}
-                </p>
               </Link>
             ))}
           </div>
