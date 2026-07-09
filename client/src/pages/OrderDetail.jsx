@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { api, downloadFile } from "../api.js";
 import {
   rupee,
@@ -40,24 +40,40 @@ export default function OrderDetail() {
   };
 
   if (loading) return <div className="loading">Loading order...</div>;
-  if (!order) return <div className="container mt">Order not found.</div>;
+  if (!order)
+    return (
+      <div className="container">
+        <div className="card empty" style={{ marginTop: 40 }}>
+          <div className="big">🔍</div>
+          <h2 style={{ margin: 0 }}>Order not found</h2>
+          <p className="muted">This order may have been removed.</p>
+        </div>
+      </div>
+    );
 
   const cancelled = order.status === "cancelled";
   const currentIdx = STATUS_STEPS.findIndex((s) => s.key === order.status);
 
   return (
-    <div className="container mt">
-      <div className="row between">
-        <h1 style={{ margin: 0 }}>Order #{order.orderNo}</h1>
-        <span className={`badge ${statusBadgeClass(order.status)}`}>
+    <div className="container">
+      <div className="crumbs">
+        <Link to="/orders">My Orders</Link>
+        <span className="sep">›</span>
+        <span>#{order.orderNo}</span>
+      </div>
+      <div className="page-head">
+        <div>
+          <h1>Order #{order.orderNo}</h1>
+          <p className="sub">
+            Placed {new Date(order.createdAt).toLocaleString("en-IN")} • {order.shop?.name}
+          </p>
+        </div>
+        <span className={`badge ${statusBadgeClass(order.status)}`} style={{ fontSize: 13 }}>
           {statusLabel(order.status)}
         </span>
       </div>
-      <p className="muted small">
-        Placed on {new Date(order.createdAt).toLocaleString("en-IN")} • {order.shop?.name}
-      </p>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 340px" }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 340px", alignItems: "start" }}>
         <div>
           {/* Tracking timeline */}
           <div className="card mb">
@@ -99,22 +115,22 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        <div>
+        <div className="summary">
           <div className="card mb">
             <h3 style={{ marginTop: 0 }}>Bill Details</h3>
-            <div className="row between small">
-              <span className="muted">Items Total</span>
+            <div className="line">
+              <span>Items Total</span>
               <span>{rupee(order.itemsTotal)}</span>
             </div>
-            <div className="row between small">
-              <span className="muted">Delivery Fee</span>
+            <div className="line">
+              <span>Delivery Fee</span>
               <span>{rupee(order.deliveryFee)}</span>
             </div>
-            <div className="row between mt">
-              <strong>Total</strong>
-              <strong className="price">{rupee(order.total)}</strong>
+            <div className="line total">
+              <span>Total</span>
+              <span className="price">{rupee(order.total)}</span>
             </div>
-            <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "12px 0" }} />
+            <hr className="dashed-sep" />
             <div className="small">
               Payment:{" "}
               <strong>{order.paymentMethod.toUpperCase()}</strong>{" "}
@@ -133,10 +149,14 @@ export default function OrderDetail() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Delivery</h3>
-            <p className="small" style={{ margin: 0 }}>
-              📍 {order.deliveryAddress}
-            </p>
-            <p className="small muted">☎ {order.phone}</p>
+            <div className="info-row">
+              <span className="ii">📍</span>
+              <span>{order.deliveryAddress}</span>
+            </div>
+            <div className="info-row">
+              <span className="ii">☎</span>
+              <span className="muted">{order.phone}</span>
+            </div>
           </div>
         </div>
       </div>

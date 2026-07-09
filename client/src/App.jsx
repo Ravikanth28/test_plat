@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
+import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 import Home from "./pages/Home.jsx";
@@ -15,8 +16,9 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 
 export default function App() {
   return (
-    <>
+    <div className="app-shell">
       <Navbar />
+      <main className="app-main">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop/:id" element={<ShopDetail />} />
@@ -66,6 +68,8 @@ export default function App() {
         />
         <Route path="*" element={<div className="container mt">Page not found.</div>} />
       </Routes>
-    </>
+      </main>
+      <Footer />
+    </div>
   );
 }

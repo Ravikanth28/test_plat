@@ -52,16 +52,18 @@ export default function ShopDashboard() {
   if (!shop) return <CreateShop onCreated={(s) => setShop(s)} />;
 
   return (
-    <div className="container mt">
-      <div className="row between">
+    <div className="container">
+      <div className="page-head">
         <div>
-          <h1 style={{ margin: 0 }}>{shop.name}</h1>
-          <span className="badge badge-cat">{shop.category}</span>{" "}
-          {shop.isApproved ? (
-            <span className="badge badge-green">Approved</span>
-          ) : (
-            <span className="badge badge-amber">Awaiting admin approval</span>
-          )}
+          <h1>{shop.name}</h1>
+          <div className="row gap" style={{ marginTop: 6 }}>
+            <span className="badge badge-cat">{shop.category}</span>
+            {shop.isApproved ? (
+              <span className="badge badge-green">Approved</span>
+            ) : (
+              <span className="badge badge-amber">Awaiting admin approval</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -83,7 +85,10 @@ export default function ShopDashboard() {
       {tab === "orders" && (
         <div>
           {orders.length === 0 ? (
-            <p className="muted">No orders yet.</p>
+            <div className="card empty">
+              <div className="big">🧾</div>
+              <p className="muted">No orders yet. They'll show up here as customers order.</p>
+            </div>
           ) : (
             orders.map((o) => (
               <div className="card mb" key={o._id}>
@@ -299,8 +304,12 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
 
       <div className="card">
         {products.length === 0 ? (
-          <p className="muted">No products yet. Add your first product.</p>
+          <div className="empty">
+            <div className="big">📦</div>
+            <p className="muted">No products yet. Add your first product using the form.</p>
+          </div>
         ) : (
+          <div className="data-table">
           <table>
             <thead>
               <tr>
@@ -339,6 +348,7 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

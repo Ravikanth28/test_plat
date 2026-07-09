@@ -31,15 +31,17 @@ export default function Navbar() {
           {user?.role === "shopkeeper" && <Link to="/shop">Shop Dashboard</Link>}
           {user?.role === "admin" && <Link to="/admin">Admin</Link>}
 
-          <Link to="/cart">
-            Cart
+          <Link to="/cart" title="Cart">
+            🛒 <span className="hide-sm">Cart</span>
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
 
           {user ? (
             <>
               <span className="muted small hide-sm">Hi, {user.name.split(" ")[0]}</span>
-              <button onClick={handleLogout}>Logout</button>
+              <button className="btn-ghost btn-sm" onClick={handleLogout}>
+                Logout
+              </button>
             </>
           ) : (
             <Link to="/login" className="btn btn-sm">

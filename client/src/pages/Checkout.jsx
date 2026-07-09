@@ -102,12 +102,18 @@ export default function Checkout() {
   };
 
   return (
-    <div className="container mt">
-      <h1>Checkout</h1>
-      <div className="grid" style={{ gridTemplateColumns: "1fr 340px" }}>
+    <div className="container">
+      <div className="page-head">
+        <div>
+          <h1>Checkout</h1>
+          <p className="sub">Almost there — confirm your details</p>
+        </div>
+      </div>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 360px", alignItems: "start" }}>
         <div>
           <div className="card mb">
-            <h3 style={{ marginTop: 0 }}>Delivery Details</h3>
+            <h3 style={{ marginTop: 0 }}>📍 Delivery Details</h3>
+            <div className="mini-map">🗺️</div>
             <div className="field">
               <label>Delivery Address</label>
               <textarea
@@ -117,67 +123,78 @@ export default function Checkout() {
                 placeholder="House no, street, area, landmark..."
               />
             </div>
-            <div className="field">
+            <div className="field" style={{ marginBottom: 0 }}>
               <label>Phone Number</label>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="10-digit mobile number"
+              />
             </div>
           </div>
 
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Payment Method</h3>
-            <label className="row gap" style={{ padding: "8px 0", cursor: "pointer" }}>
-              <input
-                type="radio"
-                checked={method === "cod"}
-                onChange={() => setMethod("cod")}
-              />
-              <span>💵 Cash on Delivery</span>
-            </label>
-            <label className="row gap" style={{ padding: "8px 0", cursor: "pointer" }}>
-              <input
-                type="radio"
-                checked={method === "online"}
-                onChange={() => setMethod("online")}
-              />
-              <span>💳 Pay Online (Razorpay)</span>
-            </label>
+            <h3 style={{ marginTop: 0 }}>💳 Payment Method</h3>
+            <div
+              className={`pay-option ${method === "cod" ? "active" : ""}`}
+              onClick={() => setMethod("cod")}
+            >
+              <span className="pi">💵</span>
+              <div>
+                <div className="pt">Cash on Delivery</div>
+                <div className="muted small">Pay when your order arrives</div>
+              </div>
+              <input type="radio" checked={method === "cod"} readOnly />
+            </div>
+            <div
+              className={`pay-option ${method === "online" ? "active" : ""}`}
+              onClick={() => setMethod("online")}
+              style={{ marginBottom: 0 }}
+            >
+              <span className="pi">💳</span>
+              <div>
+                <div className="pt">Pay Online</div>
+                <div className="muted small">UPI, Cards & Wallets via Razorpay</div>
+              </div>
+              <input type="radio" checked={method === "online"} readOnly />
+            </div>
           </div>
         </div>
 
-        <div>
-          <div className="card">
-            <h3 style={{ marginTop: 0 }}>Order Summary</h3>
-            <p className="muted small">From: {shopName}</p>
-            {items.map((i) => (
-              <div className="row between small" key={i.product} style={{ padding: "4px 0" }}>
-                <span>
-                  {i.name} × {i.qty}
-                </span>
-                <span>{rupee(i.price * i.qty)}</span>
-              </div>
-            ))}
-            <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "10px 0" }} />
-            <div className="row between small">
-              <span className="muted">Items Total</span>
-              <span>{rupee(itemsTotal)}</span>
+        <div className="card summary">
+          <h3 style={{ marginTop: 0 }}>Order Summary</h3>
+          <p className="muted small" style={{ marginTop: -4 }}>
+            From {shopName}
+          </p>
+          {items.map((i) => (
+            <div className="line" key={i.product}>
+              <span style={{ color: "var(--text)" }}>
+                {i.name} × {i.qty}
+              </span>
+              <span>{rupee(i.price * i.qty)}</span>
             </div>
-            <div className="row between small">
-              <span className="muted">Delivery Fee</span>
-              <span>{rupee(DELIVERY_FEE)}</span>
-            </div>
-            <div className="row between mt">
-              <strong>To Pay</strong>
-              <strong className="price">{rupee(total)}</strong>
-            </div>
-            {error && <div className="error mt">{error}</div>}
-            <button className="btn btn-block mt" onClick={placeOrder} disabled={busy}>
-              {busy
-                ? "Placing order..."
-                : method === "cod"
-                ? "Place Order (COD)"
-                : `Pay ${rupee(total)}`}
-            </button>
+          ))}
+          <hr className="dashed-sep" />
+          <div className="line">
+            <span>Items Total</span>
+            <span>{rupee(itemsTotal)}</span>
           </div>
+          <div className="line">
+            <span>Delivery Fee</span>
+            <span>{rupee(DELIVERY_FEE)}</span>
+          </div>
+          <div className="line total">
+            <span>To Pay</span>
+            <span className="price">{rupee(total)}</span>
+          </div>
+          {error && <div className="error mt">{error}</div>}
+          <button className="btn btn-block mt" onClick={placeOrder} disabled={busy}>
+            {busy
+              ? "Placing order..."
+              : method === "cod"
+              ? `Place Order • ${rupee(total)}`
+              : `Pay ${rupee(total)}`}
+          </button>
         </div>
       </div>
     </div>

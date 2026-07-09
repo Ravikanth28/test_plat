@@ -34,9 +34,33 @@ export default function Register() {
   };
 
   return (
-    <div className="container">
-      <form className="form card" onSubmit={submit}>
-        <h1 style={{ marginTop: 0 }}>Create your account</h1>
+    <div className="auth-split">
+      <div className="auth-aside">
+        <div className="flogo" style={{ fontSize: 30, fontWeight: 900, letterSpacing: "-0.8px", marginBottom: 20 }}>
+          Local<span style={{ color: "#fff", opacity: 0.85 }}>Mart</span>
+        </div>
+        <h2>Join LocalMart today.</h2>
+        <p>
+          Create a free account to order from local shops, or register your own
+          shop and start selling to your neighbourhood.
+        </p>
+        <div className="feat">
+          <span className="fi">🛍️</span> Shop from 12+ local stores
+        </div>
+        <div className="feat">
+          <span className="fi">🚚</span> Real-time order tracking
+        </div>
+        <div className="feat">
+          <span className="fi">🧾</span> Instant PDF invoices
+        </div>
+      </div>
+
+      <div className="auth-main">
+      <form className="form" onSubmit={submit}>
+        <h1>Create your account</h1>
+        <p className="muted small" style={{ marginTop: 0, marginBottom: 18 }}>
+          It only takes a minute
+        </p>
         {error && <div className="error">{error}</div>}
         <div className="field">
           <label>Full Name</label>
@@ -77,7 +101,10 @@ export default function Register() {
           {busy ? "Creating..." : "Register"}
         </button>
         <p className="center small mt">
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account?{" "}
+          <Link to="/login" style={{ color: "var(--brand)", fontWeight: 700 }}>
+            Login
+          </Link>
         </p>
         {form.role === "shopkeeper" && (
           <p className="small muted center">
@@ -85,6 +112,7 @@ export default function Register() {
           </p>
         )}
       </form>
+      </div>
     </div>
   );
 }

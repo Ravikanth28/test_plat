@@ -57,8 +57,18 @@ export default function AdminDashboard() {
   if (loading) return <div className="loading">Loading admin panel...</div>;
 
   return (
-    <div className="container mt">
-      <h1>Admin Control Panel</h1>
+    <div className="container">
+      <div className="page-head">
+        <div>
+          <h1>Admin Control Panel</h1>
+          <p className="sub">Manage shops, users, orders & platform health</p>
+        </div>
+        {stats && stats.pendingShops > 0 && (
+          <span className="badge badge-amber" style={{ fontSize: 13 }}>
+            {stats.pendingShops} shop{stats.pendingShops > 1 ? "s" : ""} awaiting approval
+          </span>
+        )}
+      </div>
 
       <div className="tabs">
         {["overview", "shops", "users", "orders"].map((t) => (
@@ -75,17 +85,24 @@ export default function AdminDashboard() {
 
       {tab === "overview" && stats && (
         <div className="grid grid-4">
-          <Stat num={stats.users} lbl="Users" />
-          <Stat num={stats.shops} lbl="Shops" />
-          <Stat num={stats.products} lbl="Products" />
-          <Stat num={stats.orders} lbl="Orders" />
-          <Stat num={stats.pendingShops} lbl="Pending Approvals" />
-          <Stat num={rupee(stats.revenue)} lbl="Paid Revenue" />
+          <StatCard num={stats.users} lbl="Total Users" icon="👥" cls="sc-blue" />
+          <StatCard num={stats.shops} lbl="Shops" icon="🏪" cls="sc-red" />
+          <StatCard num={stats.products} lbl="Products" icon="📦" cls="sc-amber" />
+          <StatCard num={stats.orders} lbl="Orders" icon="🧾" cls="sc-green" />
+          <StatCard num={stats.pendingShops} lbl="Pending Approvals" icon="⏳" cls="sc-amber" />
+          <StatCard num={rupee(stats.revenue)} lbl="Paid Revenue" icon="💰" cls="sc-green" />
         </div>
       )}
 
       {tab === "shops" && (
         <div className="card">
+          {shops.length === 0 ? (
+            <div className="empty">
+              <div className="big">🏪</div>
+              <p className="muted">No shops registered yet.</p>
+            </div>
+          ) : (
+          <div className="data-table">
           <table>
             <thead>
               <tr>
@@ -129,11 +146,20 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
+          </div>
+          )}
         </div>
       )}
 
       {tab === "users" && (
         <div className="card">
+          {users.length === 0 ? (
+            <div className="empty">
+              <div className="big">👥</div>
+              <p className="muted">No users found.</p>
+            </div>
+          ) : (
+          <div className="data-table">
           <table>
             <thead>
               <tr>
@@ -168,11 +194,20 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
+          </div>
+          )}
         </div>
       )}
 
       {tab === "orders" && (
         <div className="card">
+          {orders.length === 0 ? (
+            <div className="empty">
+              <div className="big">🧾</div>
+              <p className="muted">No orders placed yet.</p>
+            </div>
+          ) : (
+          <div className="data-table">
           <table>
             <thead>
               <tr>
@@ -210,15 +245,18 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
+          </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function Stat({ num, lbl }) {
+function StatCard({ num, lbl, icon, cls }) {
   return (
-    <div className="card stat">
+    <div className={`stat-card ${cls}`}>
+      <div className="ic">{icon}</div>
       <div className="num">{num}</div>
       <div className="lbl">{lbl}</div>
     </div>
