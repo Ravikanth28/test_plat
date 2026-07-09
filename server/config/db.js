@@ -8,8 +8,11 @@ export const connectDB = async () => {
   }
   try {
     mongoose.set("strictQuery", true);
-    const conn = await mongoose.connect(uri);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    // Force the app to always use the correct database, even if the
+    // connection string has no db name (which would default to "test").
+    const dbName = process.env.DB_NAME || "localmart";
+    const conn = await mongoose.connect(uri, { dbName });
+    console.log(`MongoDB connected: ${conn.connection.host} (db: ${conn.connection.name})`);
   } catch (err) {
     console.error("MongoDB connection error:", err.message);
     process.exit(1);
