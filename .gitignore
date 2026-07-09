@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+client/node_modules/
+
+# env
+.env
+*.env
+!.env.example
+
+# build
+client/dist/
+dist/
+build/
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# misc
+*.pdf
+!server/assets/*.pdf
+coverage/
+.cache/
