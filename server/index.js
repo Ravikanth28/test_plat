@@ -49,6 +49,13 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+// Bind the port FIRST so the hosting platform (Render) detects an open port
+// and the /api/health check succeeds immediately — even while MongoDB is still
+// connecting. Binding to 0.0.0.0 is required for Render's internal health check.
+app.listen(PORT, "0.0.0.0", () => console.log(`Server listening on port ${PORT}`));
+
+// Connect to MongoDB in the background; a slow/failed DB connection must not
+// prevent the web process from opening its port.
+connectDB().catch((err) => {
+  console.error("Initial MongoDB connection failed:", err.message);
 });
