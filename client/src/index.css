@@ -206,7 +206,7 @@ button {
   display: block;
   height: 2px;
   border-radius: 2px;
-  background: var(--ink);
+  background: var(--text);
 }
 
 /* Mobile drawer */
@@ -296,11 +296,11 @@ button {
   padding: 13px 12px;
   border-radius: var(--radius-sm);
   font-weight: 600;
-  color: var(--ink);
+  color: var(--text);
   transition: background 0.12s;
 }
 .drawer-links a:hover {
-  background: var(--bg);
+  background: var(--surface-2);
   color: var(--brand);
 }
 .drawer-foot {
