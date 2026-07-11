@@ -449,6 +449,61 @@ button {
   font-weight: 800;
 }
 
+/* "Get the App" banner (Home) */
+.app-banner {
+  margin: 32px 0 8px;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: linear-gradient(135deg, var(--brand-soft), #fff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.app-banner-copy {
+  max-width: 560px;
+}
+.app-banner-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 6px;
+}
+.app-banner-copy h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+.app-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.app-banner-art {
+  font-size: 84px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .app-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px 18px;
+  }
+  .app-banner-actions {
+    justify-content: center;
+  }
+  .app-banner-art {
+    order: -1;
+    font-size: 64px;
+  }
+}
+
 /* Favourite (wishlist) heart */
 .fav-heart {
   position: absolute;

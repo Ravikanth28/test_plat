@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import FavoriteButton from "../components/FavoriteButton.jsx";
+import GetAppBanner from "../components/GetAppBanner.jsx";
 import {
   CATEGORIES,
   catIcon,
@@ -180,6 +181,8 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        <GetAppBanner />
       </div>
     </div>
   );
