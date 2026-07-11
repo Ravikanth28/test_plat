@@ -9,6 +9,7 @@ const CURRENT = typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "";
 // currently loaded, it offers a one-tap refresh to pull the latest version.
 export default function UpdateBanner() {
   const [stale, setStale] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (!CURRENT) return;
@@ -36,13 +37,31 @@ export default function UpdateBanner() {
     };
   }, []);
 
-  if (!stale) return null;
+  if (!stale || dismissed) return null;
 
   return (
     <div className="update-toast" role="status">
-      <span>🎉 A new version of LocalMart is available.</span>
-      <button className="btn btn-sm" onClick={() => window.location.reload()}>
+      <span className="update-toast__icon" aria-hidden="true">
+        🎉
+      </span>
+      <div className="update-toast__text">
+        <strong className="update-toast__title">Update available</strong>
+        <span className="update-toast__sub">
+          A new version of LocalMart is ready.
+        </span>
+      </div>
+      <button
+        className="btn btn-sm update-toast__refresh"
+        onClick={() => window.location.reload()}
+      >
         Refresh
+      </button>
+      <button
+        className="update-toast__close"
+        aria-label="Dismiss"
+        onClick={() => setDismissed(true)}
+      >
+        ✕
       </button>
     </div>
   );
