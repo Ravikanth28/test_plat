@@ -1,0 +1,10 @@
+{
+  "appId": "com.localmart.app",
+  "appName": "LocalMart",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "url": "https://localmart-7foy.onrender.com",
+    "cleartext": false
+  }
+}
