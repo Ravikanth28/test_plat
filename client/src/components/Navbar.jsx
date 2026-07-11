@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import InstallApp from "./InstallApp.jsx";
 import DownloadApp from "./DownloadApp.jsx";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -94,6 +95,7 @@ export default function Navbar() {
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
 
+          <ThemeToggle className="btn btn-ghost btn-sm" />
           <DownloadApp className="btn btn-ghost btn-sm" />
           <InstallApp className="btn btn-ghost btn-sm" />
 
@@ -172,6 +174,7 @@ export default function Navbar() {
             <div className="drawer-links">{roleLinks(() => setDrawer(false))}</div>
 
             <div className="drawer-foot">
+              <ThemeToggle className="btn btn-ghost" />
               <DownloadApp className="btn btn-ghost" />
               <InstallApp className="btn btn-ghost" />
               {user ? (

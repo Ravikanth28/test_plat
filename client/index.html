@@ -6,6 +6,23 @@
     <title>LocalMart - Your neighbourhood, delivered</title>
     <meta name="description" content="Order from local department stores, medical shops, stationery, juice and food outlets near you." />
 
+    <!-- Set theme before first paint to avoid a flash of the wrong theme. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("lm_theme");
+          if (!t) {
+            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+
     <!-- PWA / installable app -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#e23744" />
