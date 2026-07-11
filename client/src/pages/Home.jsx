@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import FavoriteButton from "../components/FavoriteButton.jsx";
 import {
   CATEGORIES,
   catIcon,
@@ -158,6 +159,7 @@ export default function Home() {
                   style={{ background: tileGradient(s.name) }}
                 >
                   <span className="eta">🕒 {deliveryTime(s._id)} min</span>
+                  <FavoriteButton shopId={s._id} />
                 </Thumb>
                 <div className="shop-body">
                   <div className="row between gap">

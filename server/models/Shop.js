@@ -19,6 +19,7 @@ const shopSchema = new mongoose.Schema(
     // Admin approval so admin can "control all"
     isApproved: { type: Boolean, default: false },
     rating: { type: Number, default: 4.2 },
+    numReviews: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

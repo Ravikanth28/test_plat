@@ -13,4 +13,5 @@ export const sanitizeUser = (user) => ({
   role: user.role,
   address: user.address,
   shop: user.shop,
+  favorites: (user.favorites || []).map((f) => (f && f._id ? f._id.toString() : f.toString())),
 });

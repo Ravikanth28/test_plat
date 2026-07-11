@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useCart } from "../context/CartContext.jsx";
+import FavoriteButton from "../components/FavoriteButton.jsx";
+import Reviews from "../components/Reviews.jsx";
 import {
   catIcon,
   catLabel,
@@ -28,13 +30,17 @@ export default function ShopDetail() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [ratingInfo, setRatingInfo] = useState(null);
   const { items, addItem, decItem, count } = useCart();
 
   useEffect(() => {
     setLoading(true);
     api
       .get(`/shops/${id}`, { auth: false })
-      .then(setData)
+      .then((d) => {
+        setData(d);
+        setRatingInfo({ rating: d.shop.rating, numReviews: d.shop.numReviews || 0 });
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -42,6 +48,8 @@ export default function ShopDetail() {
   if (!data) return <div className="container mt">Shop not found.</div>;
 
   const { shop, products } = data;
+  const shownRating = ratingInfo?.rating ?? shop.rating;
+  const shownReviews = ratingInfo?.numReviews ?? shop.numReviews ?? 0;
   const qtyOf = (pid) => items.find((i) => i.product === pid)?.qty || 0;
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -63,11 +71,20 @@ export default function ShopDetail() {
             }}
           />
           <div style={{ minWidth: 0 }}>
-            <div className="row gap wrap" style={{ gap: 8 }}>
+            <div className="row gap wrap" style={{ gap: 8, alignItems: "center" }}>
               <h1 style={{ margin: 0, fontSize: 26, letterSpacing: "-0.5px" }}>
                 {shop.name}
               </h1>
-              <span className="rating-pill">★ {shop.rating}</span>
+              <span className="rating-pill">
+                ★ {shownRating}
+                {shownReviews > 0 && (
+                  <span className="muted" style={{ fontWeight: 500 }}>
+                    {" "}
+                    ({shownReviews})
+                  </span>
+                )}
+              </span>
+              <FavoriteButton shopId={shop._id} variant="button" />
             </div>
             <div className="row gap wrap" style={{ gap: 8, marginTop: 8 }}>
               <span className="badge badge-cat">{catLabel(shop.category)}</span>
@@ -151,6 +168,8 @@ export default function ShopDetail() {
           ))
         )}
       </div>
+
+      <Reviews shopId={shop._id} onRatingChange={setRatingInfo} />
 
       {count > 0 && (
         <div

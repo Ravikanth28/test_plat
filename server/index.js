@@ -12,6 +12,7 @@ import shopRoutes from "./routes/shops.js";
 import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import adminRoutes from "./routes/admin.js";
+import favoriteRoutes from "./routes/favorites.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use("/api/shops", shopRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/favorites", favoriteRoutes);
 
 // Serve React build in production (single service on Render)
 if (process.env.NODE_ENV === "production") {

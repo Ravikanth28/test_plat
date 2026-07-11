@@ -2,6 +2,8 @@ import express from "express";
 import Shop from "../models/Shop.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
+import Review from "../models/Review.js";
+import Order from "../models/Order.js";
 import { protect, authorize } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -80,6 +82,69 @@ router.put("/:id", protect, authorize("shopkeeper", "admin"), async (req, res, n
     Object.assign(shop, updates);
     await shop.save();
     res.json(shop);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/shops/:id/reviews -> list reviews for a shop
+router.get("/:id/reviews", async (req, res, next) => {
+  try {
+    const reviews = await Review.find({ shop: req.params.id }).sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/shops/:id/reviews -> customer adds/updates their review (verified purchase)
+router.post("/:id/reviews", protect, authorize("customer", "admin"), async (req, res, next) => {
+  try {
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) {
+      res.status(404);
+      throw new Error("Shop not found");
+    }
+    const rating = Number(req.body.rating);
+    if (!rating || rating < 1 || rating > 5) {
+      res.status(400);
+      throw new Error("Rating must be between 1 and 5");
+    }
+
+    // Verified purchase: customer must have ordered from this shop
+    if (req.user.role !== "admin") {
+      const order = await Order.findOne({ customer: req.user._id, shop: shop._id });
+      if (!order) {
+        res.status(403);
+        throw new Error("You can only review shops you've ordered from");
+      }
+    }
+
+    // Upsert the customer's review
+    await Review.findOneAndUpdate(
+      { shop: shop._id, customer: req.user._id },
+      {
+        shop: shop._id,
+        customer: req.user._id,
+        name: req.user.name,
+        rating,
+        comment: (req.body.comment || "").trim(),
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // Recompute shop rating + count
+    const all = await Review.find({ shop: shop._id });
+    const numReviews = all.length;
+    const avg = numReviews
+      ? all.reduce((s, r) => s + r.rating, 0) / numReviews
+      : shop.rating;
+    shop.rating = Math.round(avg * 10) / 10;
+    shop.numReviews = numReviews;
+    await shop.save();
+
+    const reviews = await Review.find({ shop: shop._id }).sort({ createdAt: -1 });
+    res.status(201).json({ rating: shop.rating, numReviews: shop.numReviews, reviews });
   } catch (err) {
     next(err);
   }

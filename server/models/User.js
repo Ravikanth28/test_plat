@@ -15,6 +15,8 @@ const userSchema = new mongoose.Schema(
     address: { type: String, default: "" },
     // For shopkeepers: the shop they own (set after shop creation)
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
+    // Customer's saved/favourite shops
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Shop" }],
   },
   { timestamps: true }
 );

@@ -2,9 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>LocalMart - Your neighbourhood, delivered</title>
     <meta name="description" content="Order from local department stores, medical shops, stationery, juice and food outlets near you." />
+
+    <!-- PWA / installable app -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#e23744" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="LocalMart" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
     <!-- Razorpay Checkout (used when live keys are configured) -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   </head>
