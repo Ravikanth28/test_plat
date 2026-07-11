@@ -12,6 +12,11 @@ client/dist/
 dist/
 build/
 
+# capacitor (generated native project + build artifacts)
+client/android/
+client/ios/
+*.apk
+
 # logs
 *.log
 npm-debug.log*

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import InstallApp from "./InstallApp.jsx";
+import DownloadApp from "./DownloadApp.jsx";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -93,6 +94,7 @@ export default function Navbar() {
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
 
+          <DownloadApp className="btn btn-ghost btn-sm" />
           <InstallApp className="btn btn-ghost btn-sm" />
 
           {user ? (
@@ -170,6 +172,7 @@ export default function Navbar() {
             <div className="drawer-links">{roleLinks(() => setDrawer(false))}</div>
 
             <div className="drawer-foot">
+              <DownloadApp className="btn btn-ghost" />
               <InstallApp className="btn btn-ghost" />
               {user ? (
                 <button className="btn btn-danger" onClick={handleLogout}>
