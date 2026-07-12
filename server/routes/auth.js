@@ -10,7 +10,16 @@ const router = express.Router();
 router.post("/register", async (req, res, next) => {
   try {
     const { name, email, password, phone, role, address } = req.body;
-    if (!name || !email || !password) {
+    // Require strings. Object values (e.g. { $gt: "" }) would otherwise slip past
+    // the truthy check and throw a 500 at email.toLowerCase() / query time.
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !name.trim() ||
+      !email.trim() ||
+      !password
+    ) {
       res.status(400);
       throw new Error("Name, email and password are required");
     }
@@ -58,7 +67,13 @@ router.post("/register", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email: email?.toLowerCase() }).select("+password");
+    // Reject non-string credentials (e.g. NoSQL-injection payloads like
+    // { $gt: "" }) with a clean 400 instead of throwing a 500 at toLowerCase().
+    if (typeof email !== "string" || typeof password !== "string") {
+      res.status(400);
+      throw new Error("Invalid email or password");
+    }
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
     if (!user || !(await user.matchPassword(password))) {
       res.status(401);
       throw new Error("Invalid email or password");
