@@ -15,6 +15,12 @@ import {
   formatDistance,
 } from "../utils.js";
 
+const SORTS = [
+  { key: "recommended", label: "Recommended" },
+  { key: "rating", label: "Top rated" },
+  { key: "delivery", label: "Fastest" },
+];
+
 function Thumb({ image, fallback, className, style, children }) {
   return (
     <div className={className} style={style}>
@@ -42,6 +48,9 @@ export default function Home() {
   const [nearMe, setNearMe] = useState(false);
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoErr, setGeoErr] = useState("");
+  // Sidebar filters applied to the shops within the chosen category.
+  const [sort, setSort] = useState("recommended");
+  const [minRating, setMinRating] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -102,18 +111,26 @@ export default function Home() {
     );
   };
 
-  // Attach a distance (km) to each shop when we know the user's location, then
-  // sort ascending if "Near me" is active. Shops without geo sink to the bottom.
-  const shopsView = shops.map((s) => ({
+  // Attach a distance (km) to each shop when we know the user's location, apply
+  // the minimum-rating filter, then order the list. "Near me" (when active)
+  // takes priority and sorts by distance; otherwise the chosen sort applies.
+  let shopsView = shops.map((s) => ({
     ...s,
     _dist: userGeo ? distanceKm(userGeo, s.geo) : null,
   }));
+  if (minRating > 0) {
+    shopsView = shopsView.filter((s) => (s.rating || 0) >= minRating);
+  }
   if (nearMe && userGeo) {
     shopsView.sort((a, b) => {
       const da = a._dist == null ? Infinity : a._dist;
       const db = b._dist == null ? Infinity : b._dist;
       return da - db;
     });
+  } else if (sort === "rating") {
+    shopsView.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  } else if (sort === "delivery") {
+    shopsView.sort((a, b) => deliveryTime(a._id) - deliveryTime(b._id));
   }
 
   return (
@@ -193,68 +210,139 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="row between" style={{ alignItems: "center" }}>
-          <h2 className="section-title" style={{ marginBottom: 0 }}>
-            {category === "all" ? "All shops near you" : catLabel(category) + " shops"}
-          </h2>
-          <button
-            className={`btn btn-sm ${nearMe ? "" : "btn-ghost"}`}
-            onClick={toggleNearMe}
-            disabled={geoBusy}
-          >
-            {geoBusy ? "Locating…" : nearMe ? "📍 Near me • On" : "📍 Near me"}
-          </button>
-        </div>
-        {geoErr && (
-          <p className="muted small" style={{ margin: "6px 0 0" }}>
-            {geoErr}
-          </p>
-        )}
+        <div className="shops-layout">
+          {/* Filter sidebar — applies to the shops in the chosen category. */}
+          <aside className="filter-panel">
+            <h3 className="filter-title">Filters</h3>
 
-        {loading ? (
-          <div className="loading">Loading shops…</div>
-        ) : shops.length === 0 ? (
-          <div className="empty">
-            <div className="big">🛍️</div>
-            <p>No shops available in this category yet.</p>
-          </div>
-        ) : (
-          <div className="grid grid-3">
-            {shopsView.map((s) => (
-              <Link to={`/shop/${s._id}`} key={s._id} className="card shop-card">
-                <Thumb
-                  className="shop-thumb"
-                  image={s.image}
-                  fallback={catIcon(s.category)}
-                  style={{ background: tileGradient(s.name) }}
+            <div className="filter-group">
+              <span className="filter-label">Showing</span>
+              <div className="filter-showing">
+                {catIcon(category)}{" "}
+                {category === "all" ? "All shops" : catLabel(category)}
+              </div>
+            </div>
+
+            <div className="filter-group">
+              <span className="filter-label">Sort by</span>
+              <div className="filter-opts">
+                {SORTS.map((o) => (
+                  <button
+                    key={o.key}
+                    className={`filter-chip ${sort === o.key && !nearMe ? "active" : ""}`}
+                    onClick={() => setSort(o.key)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="filter-group">
+              <span className="filter-label">Minimum rating</span>
+              <div className="filter-opts">
+                {[0, 4, 4.5].map((r) => (
+                  <button
+                    key={r}
+                    className={`filter-chip ${minRating === r ? "active" : ""}`}
+                    onClick={() => setMinRating(r)}
+                  >
+                    {r === 0 ? "Any" : `★ ${r}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="filter-group">
+              <span className="filter-label">Location</span>
+              <button
+                className={`btn btn-sm btn-block ${nearMe ? "" : "btn-ghost"}`}
+                onClick={toggleNearMe}
+                disabled={geoBusy}
+              >
+                {geoBusy ? "Locating…" : nearMe ? "📍 Near me • On" : "📍 Near me"}
+              </button>
+              {geoErr && (
+                <p className="muted small" style={{ margin: "6px 0 0" }}>
+                  {geoErr}
+                </p>
+              )}
+            </div>
+          </aside>
+
+          {/* Shops grid */}
+          <div className="shops-main">
+            <div className="row between" style={{ alignItems: "center" }}>
+              <h2 className="section-title" style={{ marginBottom: 0 }}>
+                {category === "all" ? "All shops near you" : catLabel(category) + " shops"}
+              </h2>
+              {!loading && (
+                <span className="muted small">
+                  {shopsView.length} {shopsView.length === 1 ? "shop" : "shops"}
+                </span>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="loading">Loading shops…</div>
+            ) : shops.length === 0 ? (
+              <div className="empty">
+                <div className="big">🛍️</div>
+                <p>No shops available in this category yet.</p>
+              </div>
+            ) : shopsView.length === 0 ? (
+              <div className="empty">
+                <div className="big">🔍</div>
+                <p>No shops match your filters.</p>
+                <button
+                  className="btn btn-ghost btn-sm mt"
+                  onClick={() => {
+                    setMinRating(0);
+                    setSort("recommended");
+                  }}
                 >
-                  <span className="eta">🕒 {deliveryTime(s._id)} min</span>
-                  {s._dist != null && (
-                    <span className="eta" style={{ left: "auto", right: 10 }}>
-                      📍 {formatDistance(s._dist)}
-                    </span>
-                  )}
-                  <FavoriteButton shopId={s._id} />
-                </Thumb>
-                <div className="shop-body">
-                  <div className="row between gap">
-                    <h3>{s.name}</h3>
-                    <span className="rating-pill">★ {s.rating}</span>
-                  </div>
-                  <div>
-                    <span className="badge badge-cat">{catLabel(s.category)}</span>
-                  </div>
-                  <p className="muted small" style={{ margin: "2px 0 0" }}>
-                    {s.description}
-                  </p>
-                  <p className="muted small" style={{ margin: 0 }}>
-                    📍 {s.address}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                  Reset filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-3">
+                {shopsView.map((s) => (
+                  <Link to={`/shop/${s._id}`} key={s._id} className="card shop-card">
+                    <Thumb
+                      className="shop-thumb"
+                      image={s.image}
+                      fallback={catIcon(s.category)}
+                      style={{ background: tileGradient(s.name) }}
+                    >
+                      <span className="eta">🕒 {deliveryTime(s._id)} min</span>
+                      {s._dist != null && (
+                        <span className="eta" style={{ left: "auto", right: 10 }}>
+                          📍 {formatDistance(s._dist)}
+                        </span>
+                      )}
+                      <FavoriteButton shopId={s._id} />
+                    </Thumb>
+                    <div className="shop-body">
+                      <div className="row between gap">
+                        <h3>{s.name}</h3>
+                        <span className="rating-pill">★ {s.rating}</span>
+                      </div>
+                      <div>
+                        <span className="badge badge-cat">{catLabel(s.category)}</span>
+                      </div>
+                      <p className="muted small" style={{ margin: "2px 0 0" }}>
+                        {s.description}
+                      </p>
+                      <p className="muted small" style={{ margin: 0 }}>
+                        📍 {s.address}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         <GetAppBanner />
       </div>
