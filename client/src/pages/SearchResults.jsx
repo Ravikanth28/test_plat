@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
+import { useLang } from "../context/LanguageContext.jsx";
 import {
   catIcon,
   catLabel,
@@ -25,6 +26,7 @@ function Thumb({ image, fallback, className, style, children }) {
 
 export default function SearchResults() {
   const [params] = useSearchParams();
+  const { t, tc } = useLang();
   const q = (params.get("q") || "").trim();
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
@@ -56,26 +58,26 @@ export default function SearchResults() {
   return (
     <div className="container mt">
       <h1 className="section-title" style={{ marginTop: 0 }}>
-        {q ? <>Search results for “{q}”</> : "Search"}
+        {q ? <>{t("search.resultsFor")} “{q}”</> : t("search.title")}
       </h1>
 
       {!q ? (
-        <p className="muted">Type something in the search bar to find shops and items.</p>
+        <p className="muted">{t("search.prompt")}</p>
       ) : loading ? (
-        <div className="loading">Searching…</div>
+        <div className="loading">{t("search.searching")}</div>
       ) : total === 0 ? (
         <div className="empty">
           <div className="big">🔍</div>
-          <p>No shops or items match “{q}”. Try a different keyword.</p>
+          <p>{t("search.noMatch")}</p>
           <Link to="/" className="btn btn-outline btn-sm">
-            Back to home
+            {t("search.backHome")}
           </Link>
         </div>
       ) : (
         <>
           {products.length > 0 && (
             <>
-              <h2 className="section-title">Items ({products.length})</h2>
+              <h2 className="section-title">{t("search.items")} ({products.length})</h2>
               <div className="grid grid-4">
                 {products.map((p) => (
                   <Link
@@ -90,11 +92,11 @@ export default function SearchResults() {
                       style={{ background: tileGradient(p.name) }}
                     />
                     <div className="badge badge-cat">
-                      {catIcon(p.shop.category)} {p.shop.name}
+                      {catIcon(p.shop.category)} {tc(p.shop.name)}
                     </div>
-                    <h4 style={{ margin: "10px 0 4px" }}>{p.name}</h4>
+                    <h4 style={{ margin: "10px 0 4px" }}>{tc(p.name)}</h4>
                     <div className="price">{rupee(p.price)}</div>
-                    <div className="muted small">Tap to view shop</div>
+                    <div className="muted small">{t("search.tapToView")}</div>
                   </Link>
                 ))}
               </div>
@@ -103,7 +105,7 @@ export default function SearchResults() {
 
           {shops.length > 0 && (
             <>
-              <h2 className="section-title">Shops ({shops.length})</h2>
+              <h2 className="section-title">{t("search.shops")} ({shops.length})</h2>
               <div className="grid grid-3">
                 {shops.map((s) => (
                   <Link to={`/shop/${s._id}`} key={s._id} className="card shop-card">
@@ -117,17 +119,17 @@ export default function SearchResults() {
                     </Thumb>
                     <div className="shop-body">
                       <div className="row between gap">
-                        <h3>{s.name}</h3>
+                        <h3>{tc(s.name)}</h3>
                         <span className="rating-pill">★ {s.rating}</span>
                       </div>
                       <div>
-                        <span className="badge badge-cat">{catLabel(s.category)}</span>
+                        <span className="badge badge-cat">{tc(catLabel(s.category))}</span>
                       </div>
                       <p className="muted small" style={{ margin: "2px 0 0" }}>
-                        {s.description}
+                        {tc(s.description)}
                       </p>
                       <p className="muted small" style={{ margin: 0 }}>
-                        📍 {s.address}
+                        📍 {tc(s.address)}
                       </p>
                     </div>
                   </Link>

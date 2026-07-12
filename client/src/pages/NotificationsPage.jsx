@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useNotifications } from "../context/NotificationContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 
 // Relative-time formatter ("2m", "3h", "5d").
 function timeAgo(date) {
@@ -28,6 +29,7 @@ const ICON = {
 export default function NotificationsPage() {
   const { items, unread, hasMore, loadMore, markRead, markAllRead } =
     useNotifications();
+  const { t, tc } = useLang();
   const navigate = useNavigate();
   const sentinel = useRef(null);
 
@@ -52,15 +54,15 @@ export default function NotificationsPage() {
   return (
     <div className="container mt notif-page">
       <div className="notif-page-head">
-        <h1>Notifications</h1>
+        <h1>{t("notif.title")}</h1>
         <div className="notif-page-actions">
           {unread > 0 && (
             <button className="btn btn-ghost btn-sm" onClick={markAllRead}>
-              Mark all read
+              {t("notif.markAllRead")}
             </button>
           )}
           <Link to="/settings" className="btn btn-ghost btn-sm">
-            ⚙️ Settings
+            ⚙️ {t("notif.settings")}
           </Link>
         </div>
       </div>
@@ -68,7 +70,7 @@ export default function NotificationsPage() {
       {/* History */}
       <section className="notif-history">
         {items.length === 0 ? (
-          <div className="notif-empty">You're all caught up 🎉</div>
+          <div className="notif-empty">{t("notif.caughtUp")}</div>
         ) : (
           <div className="notif-hist-list">
             {items.map((n) => (
@@ -79,8 +81,8 @@ export default function NotificationsPage() {
               >
                 <span className="notif-ic">{ICON[n.type] || ICON.generic}</span>
                 <span className="notif-body">
-                  <span className="notif-title">{n.title}</span>
-                  {n.body && <span className="notif-text">{n.body}</span>}
+                  <span className="notif-title">{tc(n.title)}</span>
+                  {n.body && <span className="notif-text">{tc(n.body)}</span>}
                 </span>
                 <span className="notif-time">{timeAgo(n.createdAt)}</span>
               </button>
@@ -90,7 +92,7 @@ export default function NotificationsPage() {
         {hasMore && (
           <div ref={sentinel} className="notif-more">
             <button className="btn btn-ghost btn-sm" onClick={loadMore}>
-              Load more
+              {t("notif.loadMore")}
             </button>
           </div>
         )}

@@ -9,6 +9,8 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 import Shop from "./models/Shop.js";
+import Product from "./models/Product.js";
+import { ensureTranslations } from "./utils/translate.js";
 
 import authRoutes from "./routes/auth.js";
 import shopRoutes from "./routes/shops.js";
@@ -18,6 +20,7 @@ import adminRoutes from "./routes/admin.js";
 import favoriteRoutes from "./routes/favorites.js";
 import notificationRoutes from "./routes/notifications.js";
 import bannerRoutes from "./routes/banners.js";
+import i18nRoutes from "./routes/i18n.js";
 import { initPush } from "./utils/push.js";
 
 dotenv.config();
@@ -117,6 +120,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/banners", bannerRoutes);
+app.use("/api/i18n", i18nRoutes);
 
 // Serve React build in production (single service on Render)
 if (process.env.NODE_ENV === "production") {
@@ -192,14 +196,34 @@ async function backfillShopGeo() {
   console.log(`Backfilled geo coordinates for ${missing.length} shop(s).`);
 }
 
+// Backfill content translations for existing shops/products so anything seeded
+// or created before auto-translation existed also renders in Tamil/Hindi. Only
+// uncached (text × lang) pairs hit the translation API; everything else is a
+// no-op, so this is safe (and cheap) to run on every startup. Runs in the
+// background — never blocks server start.
+async function backfillContentTranslations() {
+  const [shops, products] = await Promise.all([
+    Shop.find().select("name description"),
+    Product.find().select("name description"),
+  ]);
+  const texts = [];
+  for (const s of shops) texts.push(s.name, s.description);
+  for (const p of products) texts.push(p.name, p.description);
+  const added = await ensureTranslations(texts);
+  if (added) console.log(`Cached ${added} new content translation(s).`);
+}
+
 // Connect to MongoDB in the background; a slow/failed DB connection must not
 // prevent the web process from opening its port.
 connectDB()
-  .then(() =>
-    backfillShopGeo().catch((err) =>
+  .then(async () => {
+    await backfillShopGeo().catch((err) =>
       console.error("Shop geo backfill failed:", err.message)
-    )
-  )
+    );
+    backfillContentTranslations().catch((err) =>
+      console.error("Content translation backfill failed:", err.message)
+    );
+  })
   .catch((err) => {
     console.error("Initial MongoDB connection failed:", err.message);
   });

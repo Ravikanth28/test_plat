@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { useLang } from "../context/LanguageContext.jsx";
 import { rupee, statusLabel, statusBadgeClass } from "../utils.js";
 
 export default function AdminDashboard() {
+  const { t, tc } = useLang();
   const [tab, setTab] = useState("overview");
   const [stats, setStats] = useState(null);
   const [shops, setShops] = useState([]);
@@ -91,43 +93,52 @@ export default function AdminDashboard() {
     setBanners((prev) => prev.filter((b) => b._id !== banner._id));
   };
 
-  if (loading) return <div className="loading">Loading admin panel...</div>;
+  if (loading) return <div className="loading">{t("admin.loading")}</div>;
+
+  const TAB_LABELS = {
+    overview: t("admin.tabOverview"),
+    reports: t("admin.tabReports"),
+    shops: t("admin.tabShops"),
+    users: t("admin.tabUsers"),
+    orders: t("admin.tabOrders"),
+    banners: t("admin.tabBanners"),
+  };
 
   return (
     <div className="container">
       <div className="page-head">
         <div>
-          <h1>Admin Control Panel</h1>
-          <p className="sub">Manage shops, users, orders & platform health</p>
+          <h1>{t("admin.title")}</h1>
+          <p className="sub">{t("admin.subtitle")}</p>
         </div>
         {stats && stats.pendingShops > 0 && (
           <span className="badge badge-amber" style={{ fontSize: 13 }}>
-            {stats.pendingShops} shop{stats.pendingShops > 1 ? "s" : ""} awaiting approval
+            {stats.pendingShops} {t("admin.scShops").toLowerCase()} {t("admin.awaiting")}
           </span>
         )}
       </div>
 
       <div className="tabs">
-        {["overview", "reports", "shops", "users", "orders", "banners"].map((t) => (
+        {["overview", "reports", "shops", "users", "orders", "banners"].map((tk) => (
           <button
-            key={t}
-            className={`tab ${tab === t ? "active" : ""}`}
-            onClick={() => setTab(t)}
+            key={tk}
+            className={`tab ${tab === tk ? "active" : ""}`}
+            onClick={() => setTab(tk)}
             style={{ textTransform: "capitalize" }}
           >
-            {t}
+            {TAB_LABELS[tk]}
           </button>
         ))}
       </div>
 
       {tab === "overview" && stats && (
         <div className="grid grid-4">
-          <StatCard num={stats.users} lbl="Total Users" icon="👥" cls="sc-blue" />
-          <StatCard num={stats.shops} lbl="Shops" icon="🏪" cls="sc-red" />
-          <StatCard num={stats.products} lbl="Products" icon="📦" cls="sc-amber" />
-          <StatCard num={stats.orders} lbl="Orders" icon="🧾" cls="sc-green" />
-          <StatCard num={stats.pendingShops} lbl="Pending Approvals" icon="⏳" cls="sc-amber" />
-          <StatCard num={rupee(stats.revenue)} lbl="Paid Revenue" icon="💰" cls="sc-green" />
+          <StatCard num={stats.users} lbl={t("admin.scUsers")} icon="👥" cls="sc-blue" />
+          <StatCard num={stats.shops} lbl={t("admin.scShops")} icon="🏪" cls="sc-red" />
+          <StatCard num={stats.products} lbl={t("admin.scProducts")} icon="📦" cls="sc-amber" />
+          <StatCard num={stats.orders} lbl={t("admin.scOrders")} icon="🧾" cls="sc-green" />
+          <StatCard num={stats.pendingShops} lbl={t("admin.scPending")} icon="⏳" cls="sc-amber" />
+          <StatCard num={rupee(stats.revenue)} lbl={t("admin.scRevenue")} icon="💰" cls="sc-green" />
         </div>
       )}
 
@@ -138,47 +149,47 @@ export default function AdminDashboard() {
           {shops.length === 0 ? (
             <div className="empty">
               <div className="big">🏪</div>
-              <p className="muted">No shops registered yet.</p>
+              <p className="muted">{t("admin.noShops")}</p>
             </div>
           ) : (
           <div className="data-table">
           <table>
             <thead>
               <tr>
-                <th>Shop</th>
-                <th>Owner</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>{t("admin.thShop")}</th>
+                <th>{t("admin.thOwner")}</th>
+                <th>{t("admin.thCategory")}</th>
+                <th>{t("admin.thStatus")}</th>
+                <th>{t("admin.thActions")}</th>
               </tr>
             </thead>
             <tbody>
               {shops.map((s) => (
                 <tr key={s._id}>
-                  <td>{s.name}</td>
+                  <td>{tc(s.name)}</td>
                   <td className="small muted">{s.owner?.email}</td>
                   <td>
-                    <span className="badge badge-cat">{s.category}</span>
+                    <span className="badge badge-cat">{tc(s.category)}</span>
                   </td>
                   <td>
                     {s.isApproved ? (
-                      <span className="badge badge-green">Approved</span>
+                      <span className="badge badge-green">{t("admin.approved")}</span>
                     ) : (
-                      <span className="badge badge-amber">Pending</span>
+                      <span className="badge badge-amber">{t("admin.pending")}</span>
                     )}
                   </td>
                   <td>
                     {s.isApproved ? (
                       <button className="btn btn-ghost btn-sm" onClick={() => approveShop(s, false)}>
-                        Unapprove
+                        {t("admin.unapprove")}
                       </button>
                     ) : (
                       <button className="btn btn-sm" onClick={() => approveShop(s, true)}>
-                        Approve
+                        {t("admin.approve")}
                       </button>
                     )}{" "}
                     <button className="btn btn-danger btn-sm" onClick={() => deleteShop(s)}>
-                      Delete
+                      {t("admin.delete")}
                     </button>
                   </td>
                 </tr>
@@ -195,17 +206,17 @@ export default function AdminDashboard() {
           {users.length === 0 ? (
             <div className="empty">
               <div className="big">👥</div>
-              <p className="muted">No users found.</p>
+              <p className="muted">{t("admin.noUsers")}</p>
             </div>
           ) : (
           <div className="data-table">
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
+                <th>{t("admin.thName")}</th>
+                <th>{t("admin.thEmail")}</th>
+                <th>{t("admin.thRole")}</th>
+                <th>{t("admin.thActions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +237,7 @@ export default function AdminDashboard() {
                   </td>
                   <td>
                     <button className="btn btn-danger btn-sm" onClick={() => deleteUser(u)}>
-                      Delete
+                      {t("admin.delete")}
                     </button>
                   </td>
                 </tr>
@@ -243,19 +254,19 @@ export default function AdminDashboard() {
           {orders.length === 0 ? (
             <div className="empty">
               <div className="big">🧾</div>
-              <p className="muted">No orders placed yet.</p>
+              <p className="muted">{t("admin.noOrders")}</p>
             </div>
           ) : (
           <div className="data-table">
           <table>
             <thead>
               <tr>
-                <th>Order</th>
-                <th>Customer</th>
-                <th>Shop</th>
-                <th>Total</th>
-                <th>Payment</th>
-                <th>Status</th>
+                <th>{t("admin.thOrder")}</th>
+                <th>{t("admin.thCustomer")}</th>
+                <th>{t("admin.thShop")}</th>
+                <th>{t("admin.thTotal")}</th>
+                <th>{t("admin.thPayment")}</th>
+                <th>{t("admin.thStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -263,7 +274,7 @@ export default function AdminDashboard() {
                 <tr key={o._id}>
                   <td>#{o.orderNo}</td>
                   <td>{o.customer?.name}</td>
-                  <td>{o.shop?.name}</td>
+                  <td>{tc(o.shop?.name)}</td>
                   <td>{rupee(o.total)}</td>
                   <td>
                     {o.paymentMethod.toUpperCase()}{" "}
@@ -292,46 +303,45 @@ export default function AdminDashboard() {
       {tab === "banners" && (
         <>
           <div className="card" style={{ marginBottom: 16 }}>
-            <h3 style={{ marginTop: 0 }}>Add a hero banner</h3>
+            <h3 style={{ marginTop: 0 }}>{t("admin.addBanner")}</h3>
             <p className="muted small" style={{ marginTop: -6 }}>
-              Banners rotate in the home page hero. Use an emoji (e.g. 🥦) or an
-              image URL for the artwork.
+              {t("admin.bannerHint")}
             </p>
             <form className="banner-form" onSubmit={addBanner}>
               <input
-                placeholder="Title *"
+                placeholder={t("admin.bTitle")}
                 value={newBanner.title}
                 onChange={(e) => setNewBanner((b) => ({ ...b, title: e.target.value }))}
               />
               <input
-                placeholder="Subtitle"
+                placeholder={t("admin.bSubtitle")}
                 value={newBanner.subtitle}
                 onChange={(e) => setNewBanner((b) => ({ ...b, subtitle: e.target.value }))}
               />
               <input
-                placeholder="Image (emoji or URL)"
+                placeholder={t("admin.bImage")}
                 value={newBanner.image}
                 onChange={(e) => setNewBanner((b) => ({ ...b, image: e.target.value }))}
               />
               <input
-                placeholder="Link (e.g. /?cat=food)"
+                placeholder={t("admin.bLink")}
                 value={newBanner.link}
                 onChange={(e) => setNewBanner((b) => ({ ...b, link: e.target.value }))}
               />
               <input
-                placeholder="CTA label"
+                placeholder={t("admin.bCta")}
                 value={newBanner.cta}
                 onChange={(e) => setNewBanner((b) => ({ ...b, cta: e.target.value }))}
               />
               <input
                 type="number"
-                placeholder="Order"
+                placeholder={t("admin.bOrder")}
                 value={newBanner.order}
                 onChange={(e) => setNewBanner((b) => ({ ...b, order: e.target.value }))}
                 style={{ maxWidth: 100 }}
               />
               <button className="btn" type="submit">
-                Add banner
+                {t("admin.addBannerBtn")}
               </button>
             </form>
           </div>
@@ -340,19 +350,19 @@ export default function AdminDashboard() {
             {banners.length === 0 ? (
               <div className="empty">
                 <div className="big">🖼️</div>
-                <p className="muted">No banners yet. Add one above.</p>
+                <p className="muted">{t("admin.noBanners")}</p>
               </div>
             ) : (
               <div className="data-table">
                 <table>
                   <thead>
                     <tr>
-                      <th>Art</th>
-                      <th>Title</th>
-                      <th>Link</th>
-                      <th>Order</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th>{t("admin.thArt")}</th>
+                      <th>{t("admin.thTitle")}</th>
+                      <th>{t("admin.thLink")}</th>
+                      <th>{t("admin.bOrder")}</th>
+                      <th>{t("admin.thStatus")}</th>
+                      <th>{t("admin.thActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -377,17 +387,17 @@ export default function AdminDashboard() {
                         <td>{b.order}</td>
                         <td>
                           {b.isActive ? (
-                            <span className="badge badge-green">Active</span>
+                            <span className="badge badge-green">{t("admin.active")}</span>
                           ) : (
-                            <span className="badge badge-amber">Hidden</span>
+                            <span className="badge badge-amber">{t("admin.hidden")}</span>
                           )}
                         </td>
                         <td>
                           <button className="btn btn-ghost btn-sm" onClick={() => toggleBanner(b)}>
-                            {b.isActive ? "Hide" : "Show"}
+                            {b.isActive ? t("admin.hide") : t("admin.show")}
                           </button>{" "}
                           <button className="btn btn-danger btn-sm" onClick={() => deleteBanner(b)}>
-                            Delete
+                            {t("admin.delete")}
                           </button>
                         </td>
                       </tr>
@@ -404,7 +414,8 @@ export default function AdminDashboard() {
 }
 
 function AdminReports({ data }) {
-  if (!data) return <div className="loading">Loading revenue report...</div>;
+  const { t, tc } = useLang();
+  if (!data) return <div className="loading">{t("admin.loadingReport")}</div>;
 
   const { totals, byDay = [], shopRanking = [] } = data;
   const maxDay = Math.max(1, ...byDay.map((d) => d.revenue));
@@ -413,36 +424,36 @@ function AdminReports({ data }) {
     <>
       <div className="kpi-grid mb">
         <div className="kpi">
-          <div className="kpi-label">Earned Revenue</div>
+          <div className="kpi-label">{t("admin.earnedRevenue")}</div>
           <div className="kpi-value">{rupee(totals.revenue)}</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Delivered Orders</div>
+          <div className="kpi-label">{t("admin.deliveredOrders")}</div>
           <div className="kpi-value">{totals.deliveredOrders}</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Avg Order</div>
+          <div className="kpi-label">{t("admin.avgOrder")}</div>
           <div className="kpi-value">{rupee(totals.avgOrder)}</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Items Sold</div>
+          <div className="kpi-label">{t("admin.itemsSold")}</div>
           <div className="kpi-value">{totals.items}</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">Active Shops</div>
+          <div className="kpi-label">{t("admin.activeShops")}</div>
           <div className="kpi-value">{totals.activeShops}</div>
         </div>
       </div>
 
       <div className="card mb">
-        <h3 style={{ marginTop: 0 }}>Revenue — last 14 days</h3>
+        <h3 style={{ marginTop: 0 }}>{t("admin.revenue14")}</h3>
         <p className="muted small" style={{ marginTop: -6 }}>
-          Earned revenue from delivered orders across the platform.
+          {t("admin.revenue14Hint")}
         </p>
         {byDay.every((d) => d.revenue === 0) ? (
           <div className="empty">
             <div className="big">📉</div>
-            <p className="muted">No delivered-order revenue in this window yet.</p>
+            <p className="muted">{t("admin.noRevenue")}</p>
           </div>
         ) : (
           <div className="bar-chart">
@@ -462,26 +473,26 @@ function AdminReports({ data }) {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Shop performance ranking</h3>
+        <h3 style={{ marginTop: 0 }}>{t("admin.shopRanking")}</h3>
         <p className="muted small" style={{ marginTop: -6 }}>
-          Shops ranked by earned revenue (delivered orders only).
+          {t("admin.shopRankingHint")}
         </p>
         {shopRanking.length === 0 ? (
           <div className="empty">
             <div className="big">🏪</div>
-            <p className="muted">No shop revenue to rank yet.</p>
+            <p className="muted">{t("admin.noRanking")}</p>
           </div>
         ) : (
           <div className="data-table">
             <table>
               <thead>
                 <tr>
-                  <th>Rank</th>
-                  <th>Shop</th>
-                  <th>Category</th>
-                  <th>Revenue</th>
-                  <th>Orders</th>
-                  <th>Items</th>
+                  <th>{t("admin.thRank")}</th>
+                  <th>{t("admin.thShop")}</th>
+                  <th>{t("admin.thCategory")}</th>
+                  <th>{t("admin.thRevenue")}</th>
+                  <th>{t("admin.tabOrders")}</th>
+                  <th>{t("admin.thItems")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -490,9 +501,9 @@ function AdminReports({ data }) {
                     <td>
                       <span className={`rank-badge${s.rank <= 3 ? " top" : ""}`}>#{s.rank}</span>
                     </td>
-                    <td>{s.name}</td>
+                    <td>{tc(s.name)}</td>
                     <td>
-                      {s.category ? <span className="badge badge-cat">{s.category}</span> : "—"}
+                      {s.category ? <span className="badge badge-cat">{tc(s.category)}</span> : "—"}
                     </td>
                     <td>
                       <strong>{rupee(s.revenue)}</strong>

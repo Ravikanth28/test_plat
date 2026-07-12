@@ -10,7 +10,7 @@ export default function Cart() {
   const { items, shopName, addItem, decItem, removeItem, itemsTotal, clearCart } =
     useCart();
   const { user } = useAuth();
-  const { t } = useLang();
+  const { t, tc } = useLang();
   const navigate = useNavigate();
 
   if (items.length === 0) {
@@ -19,7 +19,7 @@ export default function Cart() {
         <div className="card empty" style={{ marginTop: 40 }}>
           <div className="big">🛒</div>
           <h2 style={{ margin: "0 0 6px" }}>{t("cart.empty")}</h2>
-          <p className="muted">Browse shops and add items to get started.</p>
+          <p className="muted">{t("cart.browseMsg")}</p>
           <Link to="/" className="btn mt">
             {t("cart.browse")}
           </Link>
@@ -42,11 +42,11 @@ export default function Cart() {
         <div>
           <h1>{t("cart.title")}</h1>
           <p className="sub">
-            From <strong>{shopName}</strong>
+            {t("cart.from")} <strong>{tc(shopName)}</strong>
           </p>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={clearCart}>
-          Clear Cart
+          {t("cart.clear")}
         </button>
       </div>
 
@@ -56,9 +56,9 @@ export default function Cart() {
             <div className="product-item" key={i.product}>
               <div className="prod-main">
                 <div>
-                  <div style={{ fontWeight: 700 }}>{i.name}</div>
+                  <div style={{ fontWeight: 700 }}>{tc(i.name)}</div>
                   <div className="muted small">
-                    {rupee(i.price)} / {i.unit || "item"}
+                    {rupee(i.price)} / {i.unit ? tc(i.unit) : t("cart.perItem")}
                   </div>
                 </div>
               </div>
@@ -93,7 +93,7 @@ export default function Cart() {
         </div>
 
         <div className="card summary">
-          <h3 style={{ margin: "0 0 12px" }}>Bill Details</h3>
+          <h3 style={{ margin: "0 0 12px" }}>{t("cart.billDetails")}</h3>
           <div className="line">
             <span>
               {t("cart.itemsTotal")} ({items.reduce((n, i) => n + i.qty, 0)})
@@ -105,7 +105,7 @@ export default function Cart() {
             <span>{rupee(DELIVERY_FEE)}</span>
           </div>
           <div className="line total">
-            <span>To Pay</span>
+            <span>{t("cart.toPay")}</span>
             <span className="price">{rupee(itemsTotal + DELIVERY_FEE)}</span>
           </div>
           <button className="btn btn-block mt" onClick={goCheckout}>
@@ -116,7 +116,7 @@ export default function Cart() {
             className="btn btn-ghost btn-block mt"
             style={{ marginTop: 8, textAlign: "center" }}
           >
-            Add more items
+            {t("cart.addMore")}
           </Link>
         </div>
       </div>

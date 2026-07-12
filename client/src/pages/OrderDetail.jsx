@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { api, downloadFile } from "../api.js";
 import { useCart } from "../context/CartContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 import {
   rupee,
   STATUS_STEPS,
@@ -19,6 +20,7 @@ export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { reorder } = useCart();
+  const { t, tc } = useLang();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -63,14 +65,14 @@ export default function OrderDetail() {
     }
   };
 
-  if (loading) return <div className="loading">Loading order...</div>;
+  if (loading) return <div className="loading">{t("order.loading")}</div>;
   if (!order)
     return (
       <div className="container">
         <div className="card empty" style={{ marginTop: 40 }}>
           <div className="big">🔍</div>
-          <h2 style={{ margin: 0 }}>Order not found</h2>
-          <p className="muted">This order may have been removed.</p>
+          <h2 style={{ margin: 0 }}>{t("order.notFound")}</h2>
+          <p className="muted">{t("order.notFoundMsg")}</p>
         </div>
       </div>
     );
@@ -93,19 +95,20 @@ export default function OrderDetail() {
   return (
     <div className="container">
       <div className="crumbs">
-        <Link to="/orders">My Orders</Link>
+        <Link to="/orders">{t("orders.title")}</Link>
         <span className="sep">›</span>
         <span>#{order.orderNo}</span>
       </div>
       <div className="page-head">
         <div>
-          <h1>Order #{order.orderNo}</h1>
+          <h1>{t("order.title")} #{order.orderNo}</h1>
           <p className="sub">
-            Placed {new Date(order.createdAt).toLocaleString("en-IN")} • {order.shop?.name}
+            {t("order.placed")} {new Date(order.createdAt).toLocaleString("en-IN")} •{" "}
+            {tc(order.shop?.name)}
           </p>
         </div>
         <span className={`badge ${statusBadgeClass(order.status)}`} style={{ fontSize: 13 }}>
-          {statusLabel(order.status)}
+          {tc(statusLabel(order.status))}
         </span>
       </div>
 
@@ -114,16 +117,17 @@ export default function OrderDetail() {
           {/* Tracking timeline */}
           <div className="card mb">
             <div className="row between" style={{ alignItems: "center" }}>
-              <h3 style={{ margin: 0 }}>Track Order</h3>
+              <h3 style={{ margin: 0 }}>{t("order.trackOrder")}</h3>
               {live && (
                 <span className="live-dot" title="Auto-updating every 15s">
-                  <span className="live-blip" /> Live
+                  <span className="live-blip" /> {t("order.live")}
                 </span>
               )}
             </div>
             {showEta && (
               <div className="badge badge-blue" style={{ margin: "10px 0" }}>
-                🕒 Est. delivery ~{eta} min • {formatDistance(dist)} away
+                🕒 {t("order.estDelivery")} ~{eta} min • {formatDistance(dist)}{" "}
+                {t("order.away")}
               </div>
             )}
             {!cancelled && (
@@ -135,7 +139,7 @@ export default function OrderDetail() {
               </div>
             )}
             {cancelled ? (
-              <div className="error">This order was cancelled.</div>
+              <div className="error">{t("order.cancelledMsg")}</div>
             ) : (
               <ul className="timeline">
                 {STATUS_STEPS.map((step, idx) => {
@@ -144,7 +148,7 @@ export default function OrderDetail() {
                   const histItem = order.statusHistory?.find((h) => h.status === step.key);
                   return (
                     <li key={step.key} className={done ? "done" : current ? "current" : ""}>
-                      <div className="t-title">{step.label}</div>
+                      <div className="t-title">{tc(step.label)}</div>
                       {histItem && (
                         <div className="muted small">
                           {new Date(histItem.at).toLocaleString("en-IN")}
@@ -157,18 +161,18 @@ export default function OrderDetail() {
             )}
             {live && updatedAt && (
               <div className="muted small" style={{ marginTop: 10 }}>
-                Last updated {updatedAt.toLocaleTimeString("en-IN")}
+                {t("order.lastUpdated")} {updatedAt.toLocaleTimeString("en-IN")}
               </div>
             )}
           </div>
 
           {/* Items */}
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Items</h3>
+            <h3 style={{ marginTop: 0 }}>{t("order.items")}</h3>
             {order.items.map((i, idx) => (
               <div className="row between" key={idx} style={{ padding: "6px 0" }}>
                 <span>
-                  {i.name} × {i.qty}
+                  {tc(i.name)} × {i.qty}
                 </span>
                 <span>{rupee(i.price * i.qty)}</span>
               </div>
@@ -178,22 +182,22 @@ export default function OrderDetail() {
 
         <div className="summary">
           <div className="card mb">
-            <h3 style={{ marginTop: 0 }}>Bill Details</h3>
+            <h3 style={{ marginTop: 0 }}>{t("order.billDetails")}</h3>
             <div className="line">
-              <span>Items Total</span>
+              <span>{t("order.itemsTotal")}</span>
               <span>{rupee(order.itemsTotal)}</span>
             </div>
             <div className="line">
-              <span>Delivery Fee</span>
+              <span>{t("order.deliveryFee")}</span>
               <span>{rupee(order.deliveryFee)}</span>
             </div>
             <div className="line total">
-              <span>Total</span>
+              <span>{t("order.total")}</span>
               <span className="price">{rupee(order.total)}</span>
             </div>
             <hr className="dashed-sep" />
             <div className="small">
-              Payment:{" "}
+              {t("order.payment")}:{" "}
               <strong>{order.paymentMethod.toUpperCase()}</strong>{" "}
               <span
                 className={`badge ${
@@ -204,20 +208,20 @@ export default function OrderDetail() {
               </span>
             </div>
             <button className="btn btn-block mt" onClick={getInvoice} disabled={downloading}>
-              {downloading ? "Preparing..." : "⬇ Download Invoice (PDF)"}
+              {downloading ? t("order.preparing") : `⬇ ${t("order.downloadInvoice")}`}
             </button>
             {(delivered || cancelled) && (
               <button className="btn btn-ghost btn-block mt" onClick={orderAgain}>
-                🔁 Order again
+                🔁 {t("order.reorder")}
               </button>
             )}
           </div>
 
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Delivery</h3>
+            <h3 style={{ marginTop: 0 }}>{t("order.delivery")}</h3>
             <div className="info-row">
               <span className="ii">📍</span>
-              <span>{order.deliveryAddress}</span>
+              <span>{tc(order.deliveryAddress)}</span>
             </div>
             <div className="info-row">
               <span className="ii">☎</span>
@@ -231,7 +235,7 @@ export default function OrderDetail() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Open pinned location on map
+                  {t("order.openMap")}
                   {order.geo.accuracy
                     ? ` (±${Math.round(order.geo.accuracy)}m)`
                     : ""}

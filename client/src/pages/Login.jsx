@@ -46,27 +46,18 @@ export default function Login() {
         <div className="flogo" style={{ fontSize: 30, fontWeight: 900, letterSpacing: "-0.8px", marginBottom: 20 }}>
           Local<span style={{ color: "#fff", opacity: 0.85 }}>Mart</span>
         </div>
-        <h2>Your neighbourhood, delivered.</h2>
-        <p>
-          Order from local shops around you — groceries, medicines, food, and more.
-          Fresh, fast, and hyperlocal.
-        </p>
-        <div className="feat">
-          <span className="fi">⚡</span> Lightning-fast local delivery
-        </div>
-        <div className="feat">
-          <span className="fi">🏪</span> Support neighbourhood shops
-        </div>
-        <div className="feat">
-          <span className="fi">🔒</span> Secure payments via Razorpay
-        </div>
+        <h2>{t("auth.loginTagline")}</h2>
+        <p>{t("auth.loginBlurb")}</p>
+        <div className="feat">{t("auth.feat1")}</div>
+        <div className="feat">{t("auth.feat2")}</div>
+        <div className="feat">{t("auth.feat3")}</div>
       </div>
 
       <div className="auth-main">
         <form className="form" onSubmit={submit}>
           <h1>{t("auth.loginTitle")}</h1>
           <p className="muted small" style={{ marginTop: 0, marginBottom: 18 }}>
-            Sign in to continue ordering
+            {t("auth.loginSub")}
           </p>
           {error && <div className="error">{error}</div>}
           <div className="field">
@@ -88,22 +79,22 @@ export default function Login() {
             />
           </div>
           <button className="btn btn-block" disabled={busy}>
-            {busy ? "Signing in..." : t("auth.signIn")}
+            {busy ? t("auth.signingIn") : t("auth.signIn")}
           </button>
           <p className="center small mt">
-            New here? <Link to="/register" style={{ color: "var(--brand)", fontWeight: 700 }}>Create an account</Link>
+            {t("auth.newHere")} <Link to="/register" style={{ color: "var(--brand)", fontWeight: 700 }}>{t("auth.createAccount")}</Link>
           </p>
           <div className="demo-box">
-            <b>Try a demo account</b>
+            <b>{t("auth.tryDemo")}</b>
             <div className="row gap wrap" style={{ marginTop: 8 }}>
               <button type="button" className="demo-fill" onClick={() => fill("customer@localmart.com", "cust123")}>
-                Customer
+                {t("auth.customer")}
               </button>
               <button type="button" className="demo-fill" onClick={() => fill("ravi@shop.com", "shop123")}>
-                Shopkeeper
+                {t("auth.shopkeeper")}
               </button>
               <button type="button" className="demo-fill" onClick={() => fill("admin@localmart.com", "admin123")}>
-                Admin
+                {t("auth.admin")}
               </button>
             </div>
           </div>

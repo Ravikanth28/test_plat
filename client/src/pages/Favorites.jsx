@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 import FavoriteButton from "../components/FavoriteButton.jsx";
 import {
   catIcon,
@@ -27,6 +28,7 @@ function Thumb({ image, fallback, className, style, children }) {
 
 export default function Favorites() {
   const { user } = useAuth();
+  const { t, tc } = useLang();
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,17 +56,17 @@ export default function Favorites() {
   return (
     <div className="container mt">
       <h1 className="section-title" style={{ marginTop: 0 }}>
-        ♥ Your saved shops
+        ♥ {t("fav.title")}
       </h1>
 
       {loading ? (
-        <div className="loading">Loading your favourites…</div>
+        <div className="loading">{t("fav.loading")}</div>
       ) : shops.length === 0 ? (
         <div className="empty">
           <div className="big">💔</div>
-          <p>You haven't saved any shops yet.</p>
+          <p>{t("fav.empty")}</p>
           <Link to="/" className="btn btn-sm">
-            Browse shops
+            {t("fav.browse")}
           </Link>
         </div>
       ) : (
@@ -82,17 +84,17 @@ export default function Favorites() {
               </Thumb>
               <div className="shop-body">
                 <div className="row between gap">
-                  <h3>{s.name}</h3>
+                  <h3>{tc(s.name)}</h3>
                   <span className="rating-pill">★ {s.rating}</span>
                 </div>
                 <div>
-                  <span className="badge badge-cat">{catLabel(s.category)}</span>
+                  <span className="badge badge-cat">{tc(catLabel(s.category))}</span>
                 </div>
                 <p className="muted small" style={{ margin: "2px 0 0" }}>
-                  {s.description}
+                  {tc(s.description)}
                 </p>
                 <p className="muted small" style={{ margin: 0 }}>
-                  📍 {s.address}
+                  📍 {tc(s.address)}
                 </p>
               </div>
             </Link>

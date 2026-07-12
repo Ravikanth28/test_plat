@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { useLang } from "../context/LanguageContext.jsx";
 import { CATEGORIES, rupee, statusLabel, statusBadgeClass } from "../utils.js";
 
 const NEXT_STATUS = {
@@ -7,12 +8,6 @@ const NEXT_STATUS = {
   accepted: "preparing",
   preparing: "out_for_delivery",
   out_for_delivery: "delivered",
-};
-const NEXT_LABEL = {
-  placed: "Accept Order",
-  accepted: "Start Preparing",
-  preparing: "Mark Out for Delivery",
-  out_for_delivery: "Mark Delivered",
 };
 
 // Downscale an uploaded image on the client to a small JPEG data URL so we can
@@ -92,6 +87,7 @@ function parseCsv(text) {
 }
 
 export default function ShopDashboard() {
+  const { t, tc } = useLang();
   const [tab, setTab] = useState("orders");
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -136,7 +132,7 @@ export default function ShopDashboard() {
     setShop(updated);
   };
 
-  if (loading) return <div className="loading">Loading dashboard...</div>;
+  if (loading) return <div className="loading">{t("shop.loading")}</div>;
 
   // No shop yet -> create form
   if (!shop) return <CreateShop onCreated={(s) => setShop(s)} />;
@@ -145,13 +141,13 @@ export default function ShopDashboard() {
     <div className="container">
       <div className="page-head">
         <div>
-          <h1>{shop.name}</h1>
+          <h1>{tc(shop.name)}</h1>
           <div className="row gap" style={{ marginTop: 6 }}>
             <span className="badge badge-cat">{shop.category}</span>
             {shop.isApproved ? (
-              <span className="badge badge-green">Approved</span>
+              <span className="badge badge-green">{t("shop.approved")}</span>
             ) : (
-              <span className="badge badge-amber">Awaiting admin approval</span>
+              <span className="badge badge-amber">{t("shop.awaiting")}</span>
             )}
           </div>
         </div>
@@ -159,41 +155,41 @@ export default function ShopDashboard() {
 
       {!shop.isApproved && (
         <div className="error mt">
-          Your shop is not yet approved by admin, so it won't appear to customers.
+          {t("shop.notApprovedMsg")}
         </div>
       )}
 
       <div className="card mt row gap wrap" style={{ alignItems: "center" }}>
-        <span className="filter-label" style={{ marginRight: 4 }}>Shop settings:</span>
+        <span className="filter-label" style={{ marginRight: 4 }}>{t("shop.settings")}</span>
         <button
           className={`filter-chip ${shop.isOpen ? "active" : ""}`}
           onClick={() => toggleShopFlag("isOpen")}
         >
-          {shop.isOpen ? "🟢 Open" : "⛔ Closed"}
+          {shop.isOpen ? t("shop.open") : t("shop.closed")}
         </button>
         <button
           className={`filter-chip ${shop.freeDelivery ? "active" : ""}`}
           onClick={() => toggleShopFlag("freeDelivery")}
         >
-          🚴 Free delivery
+          {t("shop.freeDelivery")}
         </button>
         <button
           className={`filter-chip ${shop.isPureVeg ? "active" : ""}`}
           onClick={() => toggleShopFlag("isPureVeg")}
         >
-          🥗 Pure veg
+          {t("shop.pureVeg")}
         </button>
       </div>
 
       <div className="tabs mt">
         <button className={`tab ${tab === "orders" ? "active" : ""}`} onClick={() => setTab("orders")}>
-          Orders ({orders.length})
+          {t("shop.ordersTab")} ({orders.length})
         </button>
         <button className={`tab ${tab === "products" ? "active" : ""}`} onClick={() => setTab("products")}>
-          Products ({products.length})
+          {t("shop.productsTab")} ({products.length})
         </button>
         <button className={`tab ${tab === "analytics" ? "active" : ""}`} onClick={() => setTab("analytics")}>
-          📊 Analytics
+          {t("shop.analyticsTab")}
         </button>
       </div>
 
@@ -202,7 +198,7 @@ export default function ShopDashboard() {
           {orders.length === 0 ? (
             <div className="card empty">
               <div className="big">🧾</div>
-              <p className="muted">No orders yet. They'll show up here as customers order.</p>
+              <p className="muted">{t("shop.noOrders")}</p>
             </div>
           ) : (
             orders.map((o) => (
@@ -220,8 +216,8 @@ export default function ShopDashboard() {
                 </div>
                 <div className="row between mt" style={{ alignItems: "flex-start" }}>
                   <div className="small">
-                    <div>Customer: {o.customer?.name} ({o.customer?.phone})</div>
-                    <div className="muted">📍 {o.deliveryAddress}</div>
+                    <div>{t("shop.customer")}: {o.customer?.name} ({o.customer?.phone})</div>
+                    <div className="muted">📍 {tc(o.deliveryAddress)}</div>
                     {o.geo?.lat != null && o.geo?.lng != null && (
                       <div style={{ marginTop: 2 }}>
                         <a
@@ -229,7 +225,7 @@ export default function ShopDashboard() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          🗺️ Navigate to customer
+                          {t("shop.navigate")}
                           {o.geo.accuracy ? ` (±${Math.round(o.geo.accuracy)}m)` : ""}
                         </a>
                       </div>
@@ -237,7 +233,7 @@ export default function ShopDashboard() {
                     <div style={{ marginTop: 6 }}>
                       {o.items.map((i, idx) => (
                         <div key={idx}>
-                          {i.name} × {i.qty} — {rupee(i.price * i.qty)}
+                          {tc(i.name)} × {i.qty} — {rupee(i.price * i.qty)}
                         </div>
                       ))}
                     </div>
@@ -256,11 +252,11 @@ export default function ShopDashboard() {
                     </div>
                     {NEXT_STATUS[o.status] && (
                       <button className="btn btn-sm mt" onClick={() => advance(o)}>
-                        {NEXT_LABEL[o.status]}
+                        {t("shopNext." + o.status)}
                       </button>
                     )}
                     {o.status === "delivered" && (
-                      <div className="badge badge-green mt">Completed ✓</div>
+                      <div className="badge badge-green mt">{t("shop.completed")}</div>
                     )}
                   </div>
                 </div>
@@ -285,7 +281,8 @@ export default function ShopDashboard() {
 }
 
 function ShopAnalytics({ data }) {
-  if (!data) return <div className="loading">Crunching your numbers...</div>;
+  const { t, tc } = useLang();
+  if (!data) return <div className="loading">{t("shop.crunching")}</div>;
 
   const { totals, byDay, topProducts, statusBreakdown } = data;
   const maxDay = Math.max(1, ...byDay.map((d) => d.revenue));
@@ -296,19 +293,19 @@ function ShopAnalytics({ data }) {
       {/* Headline KPIs */}
       <div className="kpi-grid mb">
         <div className="card kpi">
-          <div className="kpi-label">Revenue (delivered)</div>
+          <div className="kpi-label">{t("shop.revenueDelivered")}</div>
           <div className="kpi-value">{rupee(totals.revenue)}</div>
         </div>
         <div className="card kpi">
-          <div className="kpi-label">Delivered orders</div>
+          <div className="kpi-label">{t("shop.deliveredOrders")}</div>
           <div className="kpi-value">{totals.delivered}</div>
         </div>
         <div className="card kpi">
-          <div className="kpi-label">Avg order value</div>
+          <div className="kpi-label">{t("shop.avgOrder")}</div>
           <div className="kpi-value">{rupee(totals.avgOrder)}</div>
         </div>
         <div className="card kpi">
-          <div className="kpi-label">Items sold</div>
+          <div className="kpi-label">{t("shop.itemsSold")}</div>
           <div className="kpi-value">{totals.items}</div>
         </div>
       </div>
@@ -316,9 +313,9 @@ function ShopAnalytics({ data }) {
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
         {/* Revenue over the last 14 days */}
         <div className="card mb">
-          <h3 style={{ marginTop: 0 }}>Revenue · last 14 days</h3>
+          <h3 style={{ marginTop: 0 }}>{t("shop.revenue14")}</h3>
           {totals.revenue === 0 ? (
-            <p className="muted small">No delivered revenue yet.</p>
+            <p className="muted small">{t("shop.noRevenue")}</p>
           ) : (
             <div className="bar-chart">
               {byDay.map((d) => (
@@ -338,9 +335,9 @@ function ShopAnalytics({ data }) {
 
         {/* Order status mix */}
         <div className="card mb">
-          <h3 style={{ marginTop: 0 }}>Order status mix</h3>
+          <h3 style={{ marginTop: 0 }}>{t("shop.statusMix")}</h3>
           {statusBreakdown.length === 0 ? (
-            <p className="muted small">No orders yet.</p>
+            <p className="muted small">{t("shop.noOrdersShort")}</p>
           ) : (
             statusBreakdown.map((s) => (
               <div className="row between" key={s.status} style={{ padding: "6px 0" }}>
@@ -356,16 +353,16 @@ function ShopAnalytics({ data }) {
 
       {/* Top products by revenue */}
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Top products by revenue</h3>
+        <h3 style={{ marginTop: 0 }}>{t("shop.topProducts")}</h3>
         {topProducts.length === 0 ? (
-          <p className="muted small">No sales yet — top products will show here.</p>
+          <p className="muted small">{t("shop.noSales")}</p>
         ) : (
           topProducts.map((p) => (
             <div className="top-prod" key={p.name}>
               <div className="row between">
-                <span>{p.name}</span>
+                <span>{tc(p.name)}</span>
                 <span className="muted small">
-                  {p.qty} sold · {rupee(p.revenue)}
+                  {p.qty} {t("shop.sold")} · {rupee(p.revenue)}
                 </span>
               </div>
               <div className="track-progress" style={{ margin: "6px 0 0" }}>
@@ -383,6 +380,7 @@ function ShopAnalytics({ data }) {
 }
 
 function CreateShop({ onCreated }) {
+  const { t } = useLang();
   const [form, setForm] = useState({
     name: "",
     category: "department",
@@ -431,14 +429,14 @@ function CreateShop({ onCreated }) {
   return (
     <div className="container">
       <form className="form card" onSubmit={submit}>
-        <h1 style={{ marginTop: 0 }}>Set up your shop</h1>
+        <h1 style={{ marginTop: 0 }}>{t("shop.setup")}</h1>
         {error && <div className="error">{error}</div>}
         <div className="field">
-          <label>Shop Name</label>
+          <label>{t("shop.name")}</label>
           <input value={form.name} onChange={set("name")} required />
         </div>
         <div className="field">
-          <label>Category</label>
+          <label>{t("shop.category")}</label>
           <select value={form.category} onChange={set("category")}>
             {CATEGORIES.filter((c) => c.key !== "all").map((c) => (
               <option key={c.key} value={c.key}>
@@ -448,19 +446,19 @@ function CreateShop({ onCreated }) {
           </select>
         </div>
         <div className="field">
-          <label>Description</label>
+          <label>{t("shop.description")}</label>
           <input value={form.description} onChange={set("description")} />
         </div>
         <div className="field">
-          <label>Address</label>
+          <label>{t("shop.address")}</label>
           <input value={form.address} onChange={set("address")} />
         </div>
         <div className="field">
-          <label>Phone</label>
+          <label>{t("shop.phone")}</label>
           <input value={form.phone} onChange={set("phone")} />
         </div>
         <div className="field">
-          <label>Shop location (optional)</label>
+          <label>{t("shop.locationOptional")}</label>
           <button
             type="button"
             className="btn btn-ghost btn-block"
@@ -468,22 +466,23 @@ function CreateShop({ onCreated }) {
             disabled={geoBusy}
           >
             {geoBusy
-              ? "Locating…"
+              ? t("shop.locating")
               : geo
-              ? `📍 Location set (${geo.lat.toFixed(4)}, ${geo.lng.toFixed(4)})`
-              : "📍 Use my current location"}
+              ? `${t("shop.locationSet")} (${geo.lat.toFixed(4)}, ${geo.lng.toFixed(4)})`
+              : t("shop.useLocation")}
           </button>
           <p className="muted small" style={{ margin: "6px 0 0" }}>
-            Helps nearby customers find your shop with distance sorting.
+            {t("shop.locationHint")}
           </p>
         </div>
-        <button className="btn btn-block">Create Shop</button>
+        <button className="btn btn-block">{t("shop.create")}</button>
       </form>
     </div>
   );
 }
 
 function ProductManager({ products, setProducts, msg, setMsg }) {
+  const { t, tc } = useLang();
   const empty = { name: "", price: "", unit: "piece", category: "general", description: "", stock: 100, isVeg: true, image: "" };
   const [form, setForm] = useState(empty);
   const [editId, setEditId] = useState(null);
@@ -553,30 +552,30 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
   return (
     <div className="grid" style={{ gridTemplateColumns: "320px 1fr" }}>
       <form className="card" onSubmit={submit} style={{ height: "fit-content" }}>
-        <h3 style={{ marginTop: 0 }}>{editId ? "Edit Product" : "Add Product"}</h3>
+        <h3 style={{ marginTop: 0 }}>{editId ? t("shop.editProduct") : t("shop.addProduct")}</h3>
         {msg && <div className="success">{msg}</div>}
         <div className="field">
-          <label>Name</label>
+          <label>{t("shop.pName")}</label>
           <input value={form.name} onChange={set("name")} required />
         </div>
         <div className="field">
-          <label>Price (₹)</label>
+          <label>{t("shop.price")}</label>
           <input type="number" min="0" value={form.price} onChange={set("price")} required />
         </div>
         <div className="field">
-          <label>Unit</label>
+          <label>{t("shop.unit")}</label>
           <input value={form.unit} onChange={set("unit")} placeholder="piece / kg / glass" />
         </div>
         <div className="field">
-          <label>Category</label>
+          <label>{t("shop.category")}</label>
           <input value={form.category} onChange={set("category")} />
         </div>
         <div className="field">
-          <label>Description</label>
+          <label>{t("shop.description")}</label>
           <input value={form.description} onChange={set("description")} />
         </div>
         <div className="field">
-          <label>Stock quantity</label>
+          <label>{t("shop.stockQty")}</label>
           <input
             type="number"
             min="0"
@@ -586,26 +585,26 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
           />
         </div>
         <div className="field">
-          <label>Food type</label>
+          <label>{t("shop.foodType")}</label>
           <div className="row gap">
             <button
               type="button"
               className={`filter-chip ${form.isVeg ? "active" : ""}`}
               onClick={() => setForm({ ...form, isVeg: true })}
             >
-              🟢 Veg
+              {t("shop.veg")}
             </button>
             <button
               type="button"
               className={`filter-chip ${!form.isVeg ? "active" : ""}`}
               onClick={() => setForm({ ...form, isVeg: false })}
             >
-              🔴 Non-veg
+              {t("shop.nonVeg")}
             </button>
           </div>
         </div>
         <div className="field">
-          <label>Product image</label>
+          <label>{t("shop.productImage")}</label>
           {form.image ? (
             <div className="img-upload">
               <img src={form.image} alt="" className="img-preview" />
@@ -614,16 +613,16 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
                 className="btn btn-ghost btn-sm"
                 onClick={() => setForm((f) => ({ ...f, image: "" }))}
               >
-                Remove
+                {t("shop.remove")}
               </button>
             </div>
           ) : (
             <input type="file" accept="image/*" onChange={pickImage} disabled={imgBusy} />
           )}
-          {imgBusy && <div className="muted small" style={{ marginTop: 4 }}>Processing image…</div>}
+          {imgBusy && <div className="muted small" style={{ marginTop: 4 }}>{t("shop.processingImg")}</div>}
         </div>
         <button className="btn btn-block" disabled={imgBusy}>
-          {editId ? "Update" : "Add Product"}
+          {editId ? t("shop.update") : t("shop.addProduct")}
         </button>
         {editId && (
           <button
@@ -634,7 +633,7 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
               setForm(empty);
             }}
           >
-            Cancel
+            {t("shop.cancel")}
           </button>
         )}
       </form>
@@ -645,25 +644,25 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
         {products.length === 0 ? (
           <div className="empty">
             <div className="big">📦</div>
-            <p className="muted">No products yet. Add your first product using the form.</p>
+            <p className="muted">{t("shop.noProducts")}</p>
           </div>
         ) : (
           <div className="data-table">
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Actions</th>
+                <th>{t("shop.pName")}</th>
+                <th>{t("shop.price")}</th>
+                <th>{t("shop.thStock")}</th>
+                <th>{t("shop.thActions")}</th>
               </tr>
             </thead>
             <tbody>
               {products.map((p) => (
                 <tr key={p._id}>
                   <td>
-                    {p.name}
-                    <div className="muted small">{p.category}</div>
+                    {tc(p.name)}
+                    <div className="muted small">{tc(p.category)}</div>
                   </td>
                   <td>{rupee(p.price)}</td>
                   <td>
@@ -672,18 +671,18 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
                       style={{ border: "none", cursor: "pointer" }}
                       onClick={() => toggleStock(p)}
                     >
-                      {p.inStock ? "In stock" : "Out"}
+                      {p.inStock ? t("shop.inStock") : t("shop.out")}
                     </button>
                     <div className="muted small" style={{ marginTop: 2 }}>
-                      {p.stock ?? 0} left {p.isVeg === false ? "· 🔴" : "· 🟢"}
+                      {p.stock ?? 0} {t("shop.left")} {p.isVeg === false ? "· 🔴" : "· 🟢"}
                     </div>
                   </td>
                   <td>
                     <button className="btn btn-ghost btn-sm" onClick={() => edit(p)}>
-                      Edit
+                      {t("shop.edit")}
                     </button>{" "}
                     <button className="btn btn-danger btn-sm" onClick={() => remove(p)}>
-                      Delete
+                      {t("shop.delete")}
                     </button>
                   </td>
                 </tr>
@@ -699,6 +698,7 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
 }
 
 function CsvImport({ setProducts, setMsg }) {
+  const { t } = useLang();
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -744,20 +744,18 @@ function CsvImport({ setProducts, setMsg }) {
   return (
     <div className="card mb">
       <div className="row between" style={{ alignItems: "center" }}>
-        <h3 style={{ margin: 0 }}>📄 Bulk import (CSV)</h3>
+        <h3 style={{ margin: 0 }}>{t("shop.bulkImport")}</h3>
         <button className="btn btn-ghost btn-sm" onClick={() => setOpen((o) => !o)}>
-          {open ? "Hide" : "Import CSV"}
+          {open ? t("shop.hide") : t("shop.importCsv")}
         </button>
       </div>
       {open && (
         <div style={{ marginTop: 10 }}>
           <p className="muted small" style={{ marginTop: 0 }}>
-            Upload a CSV with a header row. Columns:{" "}
-            <code>name, price, unit, category, description, stock, isVeg</code>. Only{" "}
-            <code>name</code> and <code>price</code> are required.
+            {t("shop.csvHint")}
           </p>
           <input type="file" accept=".csv,text/csv" onChange={onFile} disabled={busy} />
-          {busy && <div className="muted small" style={{ marginTop: 6 }}>Importing…</div>}
+          {busy && <div className="muted small" style={{ marginTop: 6 }}>{t("shop.importing")}</div>}
           {result && (
             <div style={{ marginTop: 10 }}>
               {result.error ? (
@@ -765,14 +763,14 @@ function CsvImport({ setProducts, setMsg }) {
               ) : (
                 <>
                   <div className="success">
-                    Added {result.created}
-                    {result.skipped ? ` · skipped ${result.skipped}` : ""}
+                    {t("shop.added")} {result.created}
+                    {result.skipped ? ` · ${t("shop.skipped")} ${result.skipped}` : ""}
                   </div>
                   {result.errors?.length > 0 && (
                     <ul className="muted small" style={{ margin: "8px 0 0", paddingLeft: 18 }}>
                       {result.errors.slice(0, 8).map((er, i) => (
                         <li key={i}>
-                          Row {er.row}: {er.reason}
+                          {t("shop.row")} {er.row}: {er.reason}
                         </li>
                       ))}
                     </ul>

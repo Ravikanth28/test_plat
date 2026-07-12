@@ -43,7 +43,7 @@ const hhmmToMinutes = (s) => {
 
 export default function SettingsPage() {
   const { user, logout, refreshUser } = useAuth();
-  const { t } = useLang();
+  const { t, tc } = useLang();
   const navigate = useNavigate();
   const {
     soundOn,
@@ -210,7 +210,7 @@ export default function SettingsPage() {
     <div className="container mt settings-page">
       <div className="page-head">
         <h1>{t("settings.title")}</h1>
-        <p className="muted">Manage your profile, notifications, and appearance.</p>
+        <p className="muted">{t("settings.subtitle")}</p>
       </div>
 
       {/* Profile */}
@@ -220,7 +220,7 @@ export default function SettingsPage() {
             {(user?.name || "?").charAt(0).toUpperCase()}
           </div>
           <div>
-            <h2>Profile</h2>
+            <h2>{t("settings.profile")}</h2>
             <span className="muted small">
               {user?.email}
               {user?.role && <span className="role-pill">{user.role}</span>}
@@ -230,31 +230,31 @@ export default function SettingsPage() {
 
         <form className="settings-form" onSubmit={saveProfile}>
           <label className="field">
-            <span>Full name</span>
+            <span>{t("settings.fullName")}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("settings.yourName")}
             />
           </label>
           <label className="field">
-            <span>Email</span>
+            <span>{t("settings.email")}</span>
             <input value={user?.email || ""} disabled />
           </label>
           <label className="field">
-            <span>Phone</span>
+            <span>{t("settings.phone")}</span>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="Optional"
+              placeholder={t("settings.optional")}
             />
           </label>
           <label className="field">
-            <span>Address</span>
+            <span>{t("settings.address")}</span>
             <textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Delivery address"
+              placeholder={t("settings.deliveryAddress")}
               rows={2}
             />
           </label>
@@ -264,7 +264,7 @@ export default function SettingsPage() {
 
           <div className="settings-actions">
             <button className="btn" type="submit" disabled={saving || !dirty}>
-              {saving ? "Saving…" : "Save changes"}
+              {saving ? t("settings.saving") : t("settings.saveChanges")}
             </button>
           </div>
         </form>
@@ -272,9 +272,9 @@ export default function SettingsPage() {
 
       {/* Address book */}
       <section className="card settings-card">
-        <h2>Delivery address book</h2>
+        <h2>{t("settings.addrBook")}</h2>
         <p className="muted small" style={{ marginTop: -6 }}>
-          Save the places you order to — pick one instantly at checkout.
+          {t("settings.addrBookHint")}
         </p>
 
         {addresses.length > 0 && (
@@ -286,14 +286,14 @@ export default function SettingsPage() {
                 style={{ cursor: "default" }}
               >
                 <span className="addr-card-label">
-                  {a.label || "Address"}
+                  {a.label ? tc(a.label) : t("settings.addressFallback")}
                   {a.geo?.lat != null && (
                     <span className="addr-pin" title="Pinned location">
                       📍
                     </span>
                   )}
                 </span>
-                <span className="addr-card-line">{a.line}</span>
+                <span className="addr-card-line">{tc(a.line)}</span>
                 <div className="row gap" style={{ marginTop: 8 }}>
                   <button
                     type="button"
@@ -301,7 +301,7 @@ export default function SettingsPage() {
                     onClick={() => startEdit(a)}
                     disabled={addrBusy}
                   >
-                    Edit
+                    {t("settings.edit")}
                   </button>
                   <button
                     type="button"
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                     onClick={() => deleteAddress(a._id)}
                     disabled={addrBusy}
                   >
-                    Delete
+                    {t("settings.delete")}
                   </button>
                 </div>
               </div>
@@ -319,19 +319,19 @@ export default function SettingsPage() {
 
         <form className="settings-form" onSubmit={submitAddress}>
           <label className="field">
-            <span>Label</span>
+            <span>{t("settings.label")}</span>
             <input
               value={addrLabel}
               onChange={(e) => setAddrLabel(e.target.value)}
-              placeholder="Home, Work, Mom's place…"
+              placeholder={t("settings.labelPlaceholder")}
             />
           </label>
           <label className="field">
-            <span>Address</span>
+            <span>{t("settings.address")}</span>
             <textarea
               value={addrLine}
               onChange={(e) => setAddrLine(e.target.value)}
-              placeholder="House no, street, area, landmark…"
+              placeholder={t("settings.addrPlaceholder")}
               rows={2}
             />
           </label>
@@ -342,7 +342,7 @@ export default function SettingsPage() {
               onClick={pinLocation}
               disabled={locating}
             >
-              {locating ? "Locating…" : addrGeo ? "📍 Location pinned ✓" : "📍 Pin my location"}
+              {locating ? t("settings.locating") : addrGeo ? t("settings.locationPinned") : t("settings.pinLocation")}
             </button>
             {addrGeo && (
               <button
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                 className="btn btn-ghost btn-sm"
                 onClick={() => setAddrGeo(null)}
               >
-                Clear pin
+                {t("settings.clearPin")}
               </button>
             )}
           </div>
@@ -365,7 +365,7 @@ export default function SettingsPage() {
 
           <div className="settings-actions">
             <button className="btn" type="submit" disabled={addrBusy || !addrLine.trim()}>
-              {addrBusy ? "Saving…" : editId ? "Update address" : "Add address"}
+              {addrBusy ? t("settings.saving") : editId ? t("settings.updateAddress") : t("settings.addAddress")}
             </button>
             {editId && (
               <button
@@ -374,7 +374,7 @@ export default function SettingsPage() {
                 onClick={resetAddrForm}
                 disabled={addrBusy}
               >
-                Cancel
+                {t("settings.cancel")}
               </button>
             )}
           </div>
@@ -383,11 +383,11 @@ export default function SettingsPage() {
 
       {/* Notifications — Alerts */}
       <section className="card settings-card">
-        <h2>Notification alerts</h2>
+        <h2>{t("settings.notifAlerts")}</h2>
         <label className="notif-row">
           <span>
-            <strong>Mute everything</strong>
-            <span className="muted small">Pause all push and pop-up alerts</span>
+            <strong>{t("settings.muteAll")}</strong>
+            <span className="muted small">{t("settings.muteAllHint")}</span>
           </span>
           <input
             type="checkbox"
@@ -397,7 +397,7 @@ export default function SettingsPage() {
         </label>
 
         <div className="notif-row notif-col">
-          <strong>Alert me about</strong>
+          <strong>{t("settings.alertMe")}</strong>
           <div className="notif-types">
             {Object.keys(TYPE_LABELS).map((type) => (
               <label
@@ -411,7 +411,7 @@ export default function SettingsPage() {
                   disabled={!!p.muteAll}
                 />
                 <span>
-                  {ICON[type]} {TYPE_LABELS[type]}
+                  {ICON[type]} {t("notifType." + type)}
                 </span>
               </label>
             ))}
@@ -420,8 +420,8 @@ export default function SettingsPage() {
 
         <label className="notif-row">
           <span>
-            <strong>Quiet hours</strong>
-            <span className="muted small">Silence alerts during a nightly window</span>
+            <strong>{t("settings.quietHours")}</strong>
+            <span className="muted small">{t("settings.quietHint")}</span>
           </span>
           <input
             type="checkbox"
@@ -434,7 +434,7 @@ export default function SettingsPage() {
         {quiet.enabled && (
           <div className="notif-row notif-quiet">
             <label>
-              From
+              {t("settings.from")}
               <input
                 type="time"
                 value={minutesToHHMM(quiet.start)}
@@ -446,7 +446,7 @@ export default function SettingsPage() {
               />
             </label>
             <label>
-              To
+              {t("settings.to")}
               <input
                 type="time"
                 value={minutesToHHMM(quiet.end)}
@@ -463,15 +463,15 @@ export default function SettingsPage() {
 
       {/* Notifications — Sound */}
       <section className="card settings-card">
-        <h2>Notification sound (this device)</h2>
+        <h2>{t("settings.notifSound")}</h2>
         <label className="notif-row">
           <span>
-            <strong>Chime on new notification</strong>
+            <strong>{t("settings.chime")}</strong>
           </span>
           <input type="checkbox" checked={soundOn} onChange={toggleSound} />
         </label>
         <div className="notif-row">
-          <span><strong>Tone</strong></span>
+          <span><strong>{t("settings.tone")}</strong></span>
           <div className="notif-tone-opts">
             {Object.keys(TONES).map((key) => (
               <button
@@ -487,7 +487,7 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="notif-row">
-          <span><strong>Volume</strong></span>
+          <span><strong>{t("settings.volume")}</strong></span>
           <div className="notif-vol">
             <input
               type="range"
@@ -504,26 +504,26 @@ export default function SettingsPage() {
               onClick={previewSound}
               disabled={!soundOn}
             >
-              ▶ Test
+              {t("settings.test")}
             </button>
           </div>
         </div>
         <label className="notif-row">
           <span>
-            <strong>Speak alerts aloud</strong>
+            <strong>{t("settings.speakAlerts")}</strong>
             <span className="muted small">
-              Reads new alerts out loud (works while the app is open)
+              {t("settings.speakHint")}
             </span>
           </span>
           <input type="checkbox" checked={voiceOn} onChange={toggleVoice} />
         </label>
         <div className="notif-row">
           <span>
-            <strong>Background push</strong>
-            <span className="muted small">Get alerts when the app is closed</span>
+            <strong>{t("settings.bgPush")}</strong>
+            <span className="muted small">{t("settings.bgPushHint")}</span>
           </span>
           <button className="btn btn-sm" onClick={enablePush}>
-            Enable push
+            {t("settings.enablePush")}
           </button>
         </div>
       </section>
@@ -546,7 +546,7 @@ export default function SettingsPage() {
         <div className="notif-row">
           <span>
             <strong>{t("settings.theme")}</strong>
-            <span className="muted small">Switch between light and dark mode</span>
+            <span className="muted small">{t("settings.themeHint")}</span>
           </span>
           <ThemeToggle className="btn btn-ghost btn-sm" />
         </div>
@@ -554,14 +554,14 @@ export default function SettingsPage() {
 
       {/* Account */}
       <section className="card settings-card">
-        <h2>Account</h2>
+        <h2>{t("settings.account")}</h2>
         <div className="notif-row">
           <span>
-            <strong>Sign out</strong>
-            <span className="muted small">Log out of this device</span>
+            <strong>{t("settings.signOut")}</strong>
+            <span className="muted small">{t("settings.signOutHint")}</span>
           </span>
           <button className="btn btn-danger btn-sm" onClick={handleLogout}>
-            Logout
+            {t("settings.logout")}
           </button>
         </div>
       </section>

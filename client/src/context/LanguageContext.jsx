@@ -1,5 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useState } from "react";
-import { DEFAULT_LANG, LANGUAGES, translate, translateContent } from "../i18n.js";
+import { DEFAULT_LANG, LANGUAGES, translate, translateContent, registerContentTranslations } from "../i18n.js";
+import { api } from "../api.js";
 
 const LanguageContext = createContext();
 
@@ -21,6 +22,9 @@ function getInitialLang() {
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(getInitialLang);
+  // Bumped whenever new server-side content translations are merged in, so the
+  // memoised tc() below is rebuilt and consumers re-render with the new strings.
+  const [contentVersion, setContentVersion] = useState(0);
 
   // Persist the choice and reflect it on <html lang> for accessibility.
   useEffect(() => {
@@ -34,6 +38,29 @@ export function LanguageProvider({ children }) {
     }
   }, [lang]);
 
+  // Fetch runtime content translations (shop/product names & descriptions the
+  // server auto-translated after the app was built) and merge them into the
+  // in-memory dictionary. English needs none. Fire-and-forget; failures just
+  // leave content in English. Runs on every language switch, but the server
+  // map is cheap and the client merge skips entries it already has.
+  useEffect(() => {
+    if (lang === DEFAULT_LANG) return;
+    let cancelled = false;
+    api
+      .get(`/i18n/${lang}`, { auth: false })
+      .then((map) => {
+        if (cancelled) return;
+        registerContentTranslations(lang, map);
+        setContentVersion((v) => v + 1);
+      })
+      .catch(() => {
+        /* offline / server down — content stays in English */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lang]);
+
   const setLang = useCallback((code) => {
     if (VALID.has(code)) setLangState(code);
   }, []);
@@ -43,8 +70,10 @@ export function LanguageProvider({ children }) {
 
   // tc(text) — translate dynamic DB content (shop/product names, descriptions,
   // category & subcategory labels) by exact English string. Falls back to the
-  // original text when no translation exists.
-  const tc = useCallback((text) => translateContent(lang, text), [lang]);
+  // original text when no translation exists. Depends on contentVersion so it
+  // picks up translations merged in after the initial render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const tc = useCallback((text) => translateContent(lang, text), [lang, contentVersion]);
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t, tc, languages: LANGUAGES }}>

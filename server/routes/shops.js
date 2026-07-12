@@ -6,6 +6,7 @@ import Review from "../models/Review.js";
 import Order from "../models/Order.js";
 import { protect, authorize } from "../middleware/auth.js";
 import { notifyAdmins } from "../utils/notify.js";
+import { queueTranslations } from "../utils/translate.js";
 
 const router = express.Router();
 
@@ -83,6 +84,7 @@ router.post("/", protect, authorize("shopkeeper", "admin"), async (req, res, nex
     }
     const shop = await Shop.create({ ...pickShopFields(req.body), owner: req.user._id });
     await User.findByIdAndUpdate(req.user._id, { shop: shop._id });
+    queueTranslations([shop.name, shop.description]);
 
     // Notify all admins that a new shop needs approval.
     notifyAdmins({
@@ -117,6 +119,7 @@ router.put("/:id", protect, authorize("shopkeeper", "admin"), async (req, res, n
     }
     Object.assign(shop, updates);
     await shop.save();
+    queueTranslations([shop.name, shop.description]);
     res.json(shop);
   } catch (err) {
     next(err);

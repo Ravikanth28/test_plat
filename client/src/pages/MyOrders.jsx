@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { useCart } from "../context/CartContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 import { rupee, statusLabel, statusBadgeClass, catIcon } from "../utils.js";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const { reorder } = useCart();
+  const { t, tc } = useLang();
   const navigate = useNavigate();
 
   // Re-add a past order's items to the cart and jump to it. Prevent the
@@ -32,8 +34,8 @@ export default function MyOrders() {
       <div className="container">
         <div className="page-head">
           <div>
-            <h1>My Orders</h1>
-            <p className="sub">Track your recent purchases</p>
+            <h1>{t("orders.title")}</h1>
+            <p className="sub">{t("orders.subtitle")}</p>
           </div>
         </div>
         <div className="grid grid-3">
@@ -57,24 +59,24 @@ export default function MyOrders() {
     <div className="container">
       <div className="page-head">
         <div>
-          <h1>My Orders</h1>
+          <h1>{t("orders.title")}</h1>
           <p className="sub">
-            {orders.length} order{orders.length !== 1 ? "s" : ""}
-            {active > 0 && ` • ${active} in progress`}
+            {orders.length} {orders.length !== 1 ? t("orders.ordersPlural") : t("orders.order")}
+            {active > 0 && ` • ${active} ${t("orders.inProgress")}`}
           </p>
         </div>
         <Link to="/" className="btn btn-sm btn-outline">
-          + Order more
+          + {t("orders.orderMore")}
         </Link>
       </div>
 
       {orders.length === 0 ? (
         <div className="card empty">
           <div className="big">🧾</div>
-          <h2 style={{ margin: "0 0 6px" }}>No orders yet</h2>
-          <p className="muted">You haven't placed any orders. Let's fix that!</p>
+          <h2 style={{ margin: "0 0 6px" }}>{t("orders.none")}</h2>
+          <p className="muted">{t("orders.emptyMsg")}</p>
           <Link to="/" className="btn mt">
-            Start Ordering
+            {t("orders.startOrdering")}
           </Link>
         </div>
       ) : (
@@ -87,17 +89,17 @@ export default function MyOrders() {
                   <div className="row between">
                     <strong style={{ fontSize: 15 }}>#{o.orderNo}</strong>
                     <span className={`badge ${statusBadgeClass(o.status)}`}>
-                      {statusLabel(o.status)}
+                      {tc(statusLabel(o.status))}
                     </span>
                   </div>
                   <div className="muted small" style={{ marginTop: 2 }}>
-                    {o.shop?.name || "Shop"}
+                    {o.shop?.name ? tc(o.shop.name) : t("orders.shop")}
                   </div>
                 </div>
               </div>
 
               <div className="oc-items">
-                {o.items.length} item{o.items.length !== 1 ? "s" : ""}
+                {o.items.length} {o.items.length !== 1 ? t("orders.items") : t("orders.item")}
                 <span className="dot-sep" />
                 {o.paymentMethod.toUpperCase()}
                 <span className="dot-sep" />
@@ -112,7 +114,7 @@ export default function MyOrders() {
                   {rupee(o.total)}
                 </span>
                 <span className="small" style={{ color: "var(--brand)", fontWeight: 700 }}>
-                  View details →
+                  {t("orders.viewDetails")} →
                 </span>
               </div>
 
@@ -121,7 +123,7 @@ export default function MyOrders() {
                 className="btn btn-sm btn-outline btn-block oc-reorder"
                 onClick={(e) => orderAgain(e, o)}
               >
-                🔁 Order again
+                🔁 {t("orders.reorder")}
               </button>
             </Link>
           ))}

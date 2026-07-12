@@ -2,6 +2,7 @@ import express from "express";
 import Product from "../models/Product.js";
 import Shop from "../models/Shop.js";
 import { protect, authorize } from "../middleware/auth.js";
+import { queueTranslations } from "../utils/translate.js";
 
 const router = express.Router();
 
@@ -77,6 +78,7 @@ router.post("/", protect, authorize("shopkeeper", "admin"), async (req, res, nex
       throw new Error("Create your shop first");
     }
     const product = await Product.create({ ...pickProductFields(req.body), shop: shop._id });
+    queueTranslations([product.name, product.description]);
     res.status(201).json(product);
   } catch (err) {
     next(err);
@@ -122,6 +124,7 @@ router.post("/bulk", protect, authorize("shopkeeper", "admin"), async (req, res,
 
     let created = [];
     if (docs.length) created = await Product.insertMany(docs);
+    queueTranslations(created.flatMap((p) => [p.name, p.description]));
     res.status(201).json({ created: created.length, skipped: errors.length, errors, products: created });
   } catch (err) {
     next(err);
@@ -143,6 +146,7 @@ router.put("/:id", protect, authorize("shopkeeper", "admin"), async (req, res, n
     }
     Object.assign(product, pickProductFields(req.body));
     await product.save();
+    queueTranslations([product.name, product.description]);
     res.json(product);
   } catch (err) {
     next(err);

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 import { rupee } from "../utils.js";
 
 const DELIVERY_FEE = 20;
@@ -10,6 +11,7 @@ const DELIVERY_FEE = 20;
 export default function Checkout() {
   const { items, shopId, shopName, itemsTotal, clearCart } = useCart();
   const { user, refreshUser } = useAuth();
+  const { t, tc } = useLang();
   const navigate = useNavigate();
 
   const saved = user?.addresses || [];
@@ -45,9 +47,9 @@ export default function Checkout() {
     return (
       <div className="container mt center">
         <div className="card">
-          <p>Your cart is empty.</p>
+          <p>{t("checkout.emptyCart")}</p>
           <button className="btn" onClick={() => navigate("/")}>
-            Browse Shops
+            {t("checkout.browseShops")}
           </button>
         </div>
       </div>
@@ -182,18 +184,18 @@ export default function Checkout() {
     <div className="container">
       <div className="page-head">
         <div>
-          <h1>Checkout</h1>
-          <p className="sub">Almost there — confirm your details</p>
+          <h1>{t("checkout.title")}</h1>
+          <p className="sub">{t("checkout.subtitle")}</p>
         </div>
       </div>
       <div className="grid" style={{ gridTemplateColumns: "1fr 360px", alignItems: "start" }}>
         <div>
           <div className="card mb">
-            <h3 style={{ marginTop: 0 }}>📍 Delivery Details</h3>
+            <h3 style={{ marginTop: 0 }}>📍 {t("checkout.deliveryDetails")}</h3>
 
             {saved.length > 0 && (
               <div className="field">
-                <label>Saved addresses</label>
+                <label>{t("checkout.savedAddresses")}</label>
                 <div className="addr-book">
                   {saved.map((a) => (
                     <button
@@ -203,14 +205,14 @@ export default function Checkout() {
                       onClick={() => pickSaved(a)}
                     >
                       <span className="addr-card-label">
-                        {a.label || "Address"}
+                        {a.label ? tc(a.label) : t("checkout.address")}
                         {a.geo?.lat != null && (
                           <span className="addr-pin" title="Pinned location">
                             📍
                           </span>
                         )}
                       </span>
-                      <span className="addr-card-line">{a.line}</span>
+                      <span className="addr-card-line">{tc(a.line)}</span>
                     </button>
                   ))}
                 </div>
@@ -219,7 +221,7 @@ export default function Checkout() {
 
             <div className="mini-map">🗺️</div>
             <div className="field">
-              <label>Delivery Address</label>
+              <label>{t("checkout.deliveryAddress")}</label>
               <textarea
                 rows={3}
                 value={address}
@@ -227,7 +229,7 @@ export default function Checkout() {
                   setAddress(e.target.value);
                   setSelectedId(""); // typing = a new/edited address
                 }}
-                placeholder="House no, street, area, landmark..."
+                placeholder={t("checkout.addressPlaceholder")}
               />
               <button
                 type="button"
@@ -236,7 +238,7 @@ export default function Checkout() {
                 disabled={locating}
                 style={{ marginTop: 8 }}
               >
-                {locating ? "Locating…" : "📍 Use my current location"}
+                {locating ? t("checkout.locating") : `📍 ${t("checkout.useLocation")}`}
               </button>
               {locMsg && (
                 <div className="muted small" style={{ marginTop: 6 }}>
@@ -245,7 +247,7 @@ export default function Checkout() {
               )}
               {geo && (
                 <div className="muted small" style={{ marginTop: 2 }}>
-                  Sharing precise location with the shop for faster delivery.
+                  {t("checkout.sharingLocation")}
                 </div>
               )}
             </div>
@@ -259,38 +261,38 @@ export default function Checkout() {
                     checked={saveAddr}
                     onChange={(e) => setSaveAddr(e.target.checked)}
                   />
-                  <span>Save this address for next time</span>
+                  <span>{t("checkout.saveAddress")}</span>
                 </label>
                 {saveAddr && (
                   <input
                     value={saveLabel}
                     onChange={(e) => setSaveLabel(e.target.value)}
-                    placeholder="Label (e.g. Home, Work) — optional"
+                    placeholder={t("checkout.labelPlaceholder")}
                     style={{ marginTop: 8 }}
                   />
                 )}
               </div>
             )}
             <div className="field" style={{ marginBottom: 0 }}>
-              <label>Phone Number</label>
+              <label>{t("checkout.phone")}</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="10-digit mobile number"
+                placeholder={t("checkout.phonePlaceholder")}
               />
             </div>
           </div>
 
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>💳 Payment Method</h3>
+            <h3 style={{ marginTop: 0 }}>💳 {t("checkout.paymentMethod")}</h3>
             <div
               className={`pay-option ${method === "cod" ? "active" : ""}`}
               onClick={() => setMethod("cod")}
             >
               <span className="pi">💵</span>
               <div>
-                <div className="pt">Cash on Delivery</div>
-                <div className="muted small">Pay when your order arrives</div>
+                <div className="pt">{t("checkout.cod")}</div>
+                <div className="muted small">{t("checkout.codHint")}</div>
               </div>
               <input type="radio" checked={method === "cod"} readOnly />
             </div>
@@ -301,8 +303,8 @@ export default function Checkout() {
             >
               <span className="pi">💳</span>
               <div>
-                <div className="pt">Pay Online</div>
-                <div className="muted small">UPI, Cards & Wallets via Razorpay</div>
+                <div className="pt">{t("checkout.payOnline")}</div>
+                <div className="muted small">{t("checkout.payOnlineHint")}</div>
               </div>
               <input type="radio" checked={method === "online"} readOnly />
             </div>
@@ -310,38 +312,38 @@ export default function Checkout() {
         </div>
 
         <div className="card summary">
-          <h3 style={{ marginTop: 0 }}>Order Summary</h3>
+          <h3 style={{ marginTop: 0 }}>{t("checkout.orderSummary")}</h3>
           <p className="muted small" style={{ marginTop: -4 }}>
-            From {shopName}
+            {t("checkout.from")} {tc(shopName)}
           </p>
           {items.map((i) => (
             <div className="line" key={i.product}>
               <span style={{ color: "var(--text)" }}>
-                {i.name} × {i.qty}
+                {tc(i.name)} × {i.qty}
               </span>
               <span>{rupee(i.price * i.qty)}</span>
             </div>
           ))}
           <hr className="dashed-sep" />
           <div className="line">
-            <span>Items Total</span>
+            <span>{t("order.itemsTotal")}</span>
             <span>{rupee(itemsTotal)}</span>
           </div>
           <div className="line">
-            <span>Delivery Fee</span>
+            <span>{t("order.deliveryFee")}</span>
             <span>{rupee(DELIVERY_FEE)}</span>
           </div>
           <div className="line total">
-            <span>To Pay</span>
+            <span>{t("checkout.toPay")}</span>
             <span className="price">{rupee(total)}</span>
           </div>
           {error && <div className="error mt">{error}</div>}
           <button className="btn btn-block mt" onClick={placeOrder} disabled={busy}>
             {busy
-              ? "Placing order..."
+              ? t("checkout.placing")
               : method === "cod"
-              ? `Place Order • ${rupee(total)}`
-              : `Pay ${rupee(total)}`}
+              ? `${t("checkout.title")} • ${rupee(total)}`
+              : `${t("checkout.pay")} ${rupee(total)}`}
           </button>
         </div>
       </div>

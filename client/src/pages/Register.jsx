@@ -41,31 +41,22 @@ export default function Register() {
         <div className="flogo" style={{ fontSize: 30, fontWeight: 900, letterSpacing: "-0.8px", marginBottom: 20 }}>
           Local<span style={{ color: "#fff", opacity: 0.85 }}>Mart</span>
         </div>
-        <h2>Join LocalMart today.</h2>
-        <p>
-          Create a free account to order from local shops, or register your own
-          shop and start selling to your neighbourhood.
-        </p>
-        <div className="feat">
-          <span className="fi">🛍️</span> Shop from 12+ local stores
-        </div>
-        <div className="feat">
-          <span className="fi">🚚</span> Real-time order tracking
-        </div>
-        <div className="feat">
-          <span className="fi">🧾</span> Instant PDF invoices
-        </div>
+        <h2>{t("auth.registerTagline")}</h2>
+        <p>{t("auth.registerBlurb")}</p>
+        <div className="feat">{t("auth.rfeat1")}</div>
+        <div className="feat">{t("auth.rfeat2")}</div>
+        <div className="feat">{t("auth.rfeat3")}</div>
       </div>
 
       <div className="auth-main">
       <form className="form" onSubmit={submit}>
         <h1>{t("auth.registerTitle")}</h1>
         <p className="muted small" style={{ marginTop: 0, marginBottom: 18 }}>
-          It only takes a minute
+          {t("auth.registerSub")}
         </p>
         {error && <div className="error">{error}</div>}
         <div className="field">
-          <label>Full Name</label>
+          <label>{t("auth.fullName")}</label>
           <input value={form.name} onChange={set("name")} required />
         </div>
         <div className="field">
@@ -73,11 +64,11 @@ export default function Register() {
           <input type="email" value={form.email} onChange={set("email")} required />
         </div>
         <div className="field">
-          <label>Phone</label>
+          <label>{t("auth.phone")}</label>
           <input value={form.phone} onChange={set("phone")} />
         </div>
         <div className="field">
-          <label>Password (min 6 chars)</label>
+          <label>{t("auth.passwordMin")}</label>
           <input
             type="password"
             value={form.password}
@@ -87,20 +78,20 @@ export default function Register() {
           />
         </div>
         <div className="field">
-          <label>I want to register as</label>
+          <label>{t("auth.registerAs")}</label>
           <select value={form.role} onChange={set("role")}>
-            <option value="customer">Customer (order items)</option>
-            <option value="shopkeeper">Shopkeeper (sell items)</option>
+            <option value="customer">{t("auth.roleCustomer")}</option>
+            <option value="shopkeeper">{t("auth.roleShopkeeper")}</option>
           </select>
         </div>
         {form.role === "customer" && (
           <div className="field">
-            <label>Delivery Address</label>
+            <label>{t("auth.deliveryAddress")}</label>
             <textarea rows={2} value={form.address} onChange={set("address")} />
           </div>
         )}
         <button className="btn btn-block" disabled={busy}>
-          {busy ? "Creating..." : t("auth.signUp")}
+          {busy ? t("auth.creating") : t("auth.signUp")}
         </button>
         <p className="center small mt">
           {t("auth.haveAccount")}{" "}
@@ -110,7 +101,7 @@ export default function Register() {
         </p>
         {form.role === "shopkeeper" && (
           <p className="small muted center">
-            Note: your shop needs admin approval before it appears publicly.
+            {t("auth.shopApprovalNote")}
           </p>
         )}
       </form>
