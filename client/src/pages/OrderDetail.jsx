@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { api, downloadFile } from "../api.js";
+import { useCart } from "../context/CartContext.jsx";
 import {
   rupee,
   STATUS_STEPS,
@@ -11,25 +12,45 @@ import {
   formatDistance,
 } from "../utils.js";
 
+// An order is "live" (worth polling) until it reaches a terminal state.
+const TERMINAL = ["delivered", "cancelled"];
+
 export default function OrderDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { reorder } = useCart();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   const load = useCallback(() => {
     api
       .get(`/orders/${id}`)
-      .then(setOrder)
+      .then((o) => {
+        setOrder(o);
+        setUpdatedAt(new Date());
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
   useEffect(() => {
     load();
-    // Auto-refresh tracking every 15s while not delivered/cancelled
+  }, [load]);
+
+  // Auto-refresh tracking every 15s, but stop once the order is delivered or
+  // cancelled — no point hammering the API for a finished order.
+  const live = order && !TERMINAL.includes(order.status);
+  useEffect(() => {
+    if (!live) return;
     const t = setInterval(load, 15000);
     return () => clearInterval(t);
-  }, [load]);
+  }, [live, load]);
+
+  const orderAgain = () => {
+    const n = reorder(order.items, order.shop);
+    if (n) navigate("/cart");
+  };
 
   const getInvoice = async () => {
     setDownloading(true);
@@ -56,6 +77,12 @@ export default function OrderDetail() {
 
   const cancelled = order.status === "cancelled";
   const currentIdx = STATUS_STEPS.findIndex((s) => s.key === order.status);
+  const delivered = order.status === "delivered";
+  // Fill the progress bar proportionally to how far along the timeline we are.
+  const progressPct =
+    STATUS_STEPS.length > 1
+      ? Math.max(0, Math.min(100, (currentIdx / (STATUS_STEPS.length - 1)) * 100))
+      : 0;
 
   // Estimated delivery time from shop -> customer, shown while the order is
   // still in flight and we have both endpoints' coordinates.
@@ -86,10 +113,25 @@ export default function OrderDetail() {
         <div>
           {/* Tracking timeline */}
           <div className="card mb">
-            <h3 style={{ marginTop: 0 }}>Track Order</h3>
+            <div className="row between" style={{ alignItems: "center" }}>
+              <h3 style={{ margin: 0 }}>Track Order</h3>
+              {live && (
+                <span className="live-dot" title="Auto-updating every 15s">
+                  <span className="live-blip" /> Live
+                </span>
+              )}
+            </div>
             {showEta && (
-              <div className="badge badge-blue" style={{ marginBottom: 10 }}>
+              <div className="badge badge-blue" style={{ margin: "10px 0" }}>
                 🕒 Est. delivery ~{eta} min • {formatDistance(dist)} away
+              </div>
+            )}
+            {!cancelled && (
+              <div className="track-progress" aria-hidden="true">
+                <div
+                  className="track-progress-fill"
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
             )}
             {cancelled ? (
@@ -112,6 +154,11 @@ export default function OrderDetail() {
                   );
                 })}
               </ul>
+            )}
+            {live && updatedAt && (
+              <div className="muted small" style={{ marginTop: 10 }}>
+                Last updated {updatedAt.toLocaleTimeString("en-IN")}
+              </div>
             )}
           </div>
 
@@ -159,6 +206,11 @@ export default function OrderDetail() {
             <button className="btn btn-block mt" onClick={getInvoice} disabled={downloading}>
               {downloading ? "Preparing..." : "⬇ Download Invoice (PDF)"}
             </button>
+            {(delivered || cancelled) && (
+              <button className="btn btn-ghost btn-block mt" onClick={orderAgain}>
+                🔁 Order again
+              </button>
+            )}
           </div>
 
           <div className="card">
