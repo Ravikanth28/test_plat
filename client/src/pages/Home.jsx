@@ -21,6 +21,50 @@ const SORTS = [
   { key: "delivery", label: "Fastest" },
 ];
 
+// Sub-category chips shown per chosen category. Each chip carries keywords that
+// are matched (best-effort) against a shop's name + description so, e.g. picking
+// "Meals" under Food surfaces shops that mention meals/thali/tiffin.
+const SUBCATS = {
+  food: [
+    { key: "veg", label: "🥗 Veg", kw: ["veg", "vegetarian", "pure veg"] },
+    { key: "nonveg", label: "🍗 Non-veg", kw: ["non-veg", "nonveg", "chicken", "mutton", "egg", "biryani"] },
+    { key: "meals", label: "🍛 Meals", kw: ["meal", "thali", "tiffin", "lunch"] },
+    { key: "starter", label: "🍢 Starters", kw: ["starter", "snack", "appetizer"] },
+    { key: "snacks", label: "🍟 Snacks", kw: ["snack", "chaat", "fries", "roll"] },
+  ],
+  grocery: [
+    { key: "biscuit", label: "🍪 Biscuits", kw: ["biscuit", "cookie"] },
+    { key: "chocolate", label: "🍫 Chocolate", kw: ["chocolate", "candy", "sweet"] },
+    { key: "cereal", label: "🥣 Cereal", kw: ["cereal", "oats", "corn flakes", "muesli"] },
+    { key: "beverage", label: "🧃 Beverages", kw: ["beverage", "drink", "juice", "soda"] },
+    { key: "staples", label: "🌾 Staples", kw: ["rice", "atta", "flour", "dal", "pulses", "staple"] },
+  ],
+  department: [
+    { key: "household", label: "🧺 Household", kw: ["household", "home", "cleaning"] },
+    { key: "kitchen", label: "🍳 Kitchen", kw: ["kitchen", "utensil", "cookware"] },
+    { key: "toys", label: "🧸 Toys & puzzles", kw: ["toy", "puzzle", "game"] },
+    { key: "stationery", label: "✏️ Stationery", kw: ["stationery", "pen", "book", "notebook"] },
+  ],
+  medical: [
+    { key: "prescription", label: "💊 Prescription", kw: ["prescription", "medicine", "chemist", "pharmacy"] },
+    { key: "wellness", label: "🩹 Wellness", kw: ["wellness", "vitamin", "supplement", "health"] },
+    { key: "baby", label: "🍼 Baby care", kw: ["baby", "diaper", "infant"] },
+  ],
+  stationery: [
+    { key: "school", label: "🎒 School", kw: ["school", "student"] },
+    { key: "office", label: "🖇️ Office", kw: ["office", "work"] },
+    { key: "art", label: "🎨 Art", kw: ["art", "craft", "colour", "color", "paint"] },
+    { key: "books", label: "📚 Books", kw: ["book", "notebook"] },
+  ],
+  juice: [
+    { key: "fresh", label: "🧃 Fresh juice", kw: ["juice", "fresh"] },
+    { key: "smoothie", label: "🥤 Smoothies", kw: ["smoothie", "shake"] },
+    { key: "milkshake", label: "🥛 Milkshakes", kw: ["milkshake", "shake", "milk"] },
+  ],
+};
+
+const shopText = (s) => `${s.name || ""} ${s.description || ""}`.toLowerCase();
+
 function Thumb({ image, fallback, className, style, children }) {
   return (
     <div className={className} style={style}>
@@ -51,6 +95,14 @@ export default function Home() {
   // Sidebar filters applied to the shops within the chosen category.
   const [sort, setSort] = useState("recommended");
   const [minRating, setMinRating] = useState(0);
+  // Sub-category chip within the chosen category ("all" = no sub-filter).
+  const [sub, setSub] = useState("all");
+
+  // Reset the sub-category whenever the top-level category changes so a stale
+  // chip (e.g. "Meals") doesn't linger after switching to Grocery.
+  useEffect(() => {
+    setSub("all");
+  }, [category]);
 
   useEffect(() => {
     setLoading(true);
@@ -120,6 +172,17 @@ export default function Home() {
   }));
   if (minRating > 0) {
     shopsView = shopsView.filter((s) => (s.rating || 0) >= minRating);
+  }
+  // Sub-category keyword match (best-effort on name + description).
+  const subOpts = SUBCATS[category] || null;
+  if (sub !== "all" && subOpts) {
+    const opt = subOpts.find((o) => o.key === sub);
+    if (opt) {
+      shopsView = shopsView.filter((s) => {
+        const t = shopText(s);
+        return opt.kw.some((k) => t.includes(k));
+      });
+    }
   }
   if (nearMe && userGeo) {
     shopsView.sort((a, b) => {
@@ -223,6 +286,29 @@ export default function Home() {
               </div>
             </div>
 
+            {subOpts && (
+              <div className="filter-group">
+                <span className="filter-label">{catLabel(category)} type</span>
+                <div className="filter-opts">
+                  <button
+                    className={`filter-chip ${sub === "all" ? "active" : ""}`}
+                    onClick={() => setSub("all")}
+                  >
+                    All
+                  </button>
+                  {subOpts.map((o) => (
+                    <button
+                      key={o.key}
+                      className={`filter-chip ${sub === o.key ? "active" : ""}`}
+                      onClick={() => setSub(o.key)}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="filter-group">
               <span className="filter-label">Sort by</span>
               <div className="filter-opts">
@@ -299,6 +385,7 @@ export default function Home() {
                   onClick={() => {
                     setMinRating(0);
                     setSort("recommended");
+                    setSub("all");
                   }}
                 >
                   Reset filters
