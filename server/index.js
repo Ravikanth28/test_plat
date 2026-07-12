@@ -57,6 +57,18 @@ app.use(
 // origin, so browsers don't send cross-origin API calls; the dev Vite server
 // (:5173) and any explicit CLIENT_URL are allowed. Requests with no Origin
 // header (curl, health checks, same-origin) are permitted.
+//
+// A disallowed origin must NOT throw — throwing turns the CORS decision into a
+// hard 500 (application/json) for ANY request that carries that Origin header.
+// Crucially, Vite emits the app shell as <script type="module" crossorigin>,
+// which the browser fetches in CORS mode WITH an Origin header even though the
+// asset is same-origin. If the site's own Render origin isn't in the allowlist,
+// throwing made every module/asset load 500 -> the bundle never executed and
+// the page rendered blank. Returning cb(null, false) instead simply omits the
+// Access-Control-Allow-Origin header: same-origin requests (the app shell,
+// modules, and same-origin API calls) still succeed because the browser doesn't
+// require ACAO for same-origin, while genuine cross-origin callers from unknown
+// origins get no ACAO and are blocked by the browser — same protection, no 500.
 const allowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:5173",
@@ -66,7 +78,7 @@ app.use(
   cors({
     origin(origin, cb) {
       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error("Not allowed by CORS"));
+      return cb(null, false);
     },
     credentials: true,
   })
