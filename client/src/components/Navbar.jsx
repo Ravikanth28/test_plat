@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
@@ -132,9 +133,11 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile drawer */}
-      {drawer && (
-        <div className="drawer-overlay" onClick={() => setDrawer(false)}>
+      {/* Mobile drawer — portaled to <body> so it escapes the navbar's
+          backdrop-filter containing block and can cover the full viewport. */}
+      {drawer &&
+        createPortal(
+          <div className="drawer-overlay" onClick={() => setDrawer(false)}>
           <aside className="drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-head">
               <span className="logo">
@@ -197,8 +200,9 @@ export default function Navbar() {
               )}
             </div>
           </aside>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </nav>
   );
 }
