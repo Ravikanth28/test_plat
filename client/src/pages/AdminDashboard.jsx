@@ -8,19 +8,24 @@ export default function AdminDashboard() {
   const [shops, setShops] = useState([]);
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const emptyBanner = { title: "", subtitle: "", image: "", link: "/", cta: "Shop now", order: 0 };
+  const [newBanner, setNewBanner] = useState(emptyBanner);
 
   const load = async () => {
-    const [s, sh, u, o] = await Promise.all([
+    const [s, sh, u, o, b] = await Promise.all([
       api.get("/admin/stats"),
       api.get("/admin/shops"),
       api.get("/admin/users"),
       api.get("/admin/orders"),
+      api.get("/admin/banners"),
     ]);
     setStats(s);
     setShops(sh);
     setUsers(u);
     setOrders(o);
+    setBanners(b);
     setLoading(false);
   };
 
@@ -54,6 +59,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const addBanner = async (e) => {
+    e.preventDefault();
+    if (!newBanner.title.trim()) return alert("Banner title is required");
+    try {
+      const created = await api.post("/admin/banners", newBanner);
+      setBanners((prev) => [...prev, created]);
+      setNewBanner(emptyBanner);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const toggleBanner = async (banner) => {
+    const updated = await api.put(`/admin/banners/${banner._id}`, {
+      isActive: !banner.isActive,
+    });
+    setBanners((prev) => prev.map((b) => (b._id === banner._id ? { ...b, ...updated } : b)));
+  };
+
+  const deleteBanner = async (banner) => {
+    if (!window.confirm(`Delete banner "${banner.title}"?`)) return;
+    await api.del(`/admin/banners/${banner._id}`);
+    setBanners((prev) => prev.filter((b) => b._id !== banner._id));
+  };
+
   if (loading) return <div className="loading">Loading admin panel...</div>;
 
   return (
@@ -71,7 +101,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="tabs">
-        {["overview", "shops", "users", "orders"].map((t) => (
+        {["overview", "shops", "users", "orders", "banners"].map((t) => (
           <button
             key={t}
             className={`tab ${tab === t ? "active" : ""}`}
@@ -248,6 +278,117 @@ export default function AdminDashboard() {
           </div>
           )}
         </div>
+      )}
+
+      {tab === "banners" && (
+        <>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <h3 style={{ marginTop: 0 }}>Add a hero banner</h3>
+            <p className="muted small" style={{ marginTop: -6 }}>
+              Banners rotate in the home page hero. Use an emoji (e.g. 🥦) or an
+              image URL for the artwork.
+            </p>
+            <form className="banner-form" onSubmit={addBanner}>
+              <input
+                placeholder="Title *"
+                value={newBanner.title}
+                onChange={(e) => setNewBanner((b) => ({ ...b, title: e.target.value }))}
+              />
+              <input
+                placeholder="Subtitle"
+                value={newBanner.subtitle}
+                onChange={(e) => setNewBanner((b) => ({ ...b, subtitle: e.target.value }))}
+              />
+              <input
+                placeholder="Image (emoji or URL)"
+                value={newBanner.image}
+                onChange={(e) => setNewBanner((b) => ({ ...b, image: e.target.value }))}
+              />
+              <input
+                placeholder="Link (e.g. /?cat=food)"
+                value={newBanner.link}
+                onChange={(e) => setNewBanner((b) => ({ ...b, link: e.target.value }))}
+              />
+              <input
+                placeholder="CTA label"
+                value={newBanner.cta}
+                onChange={(e) => setNewBanner((b) => ({ ...b, cta: e.target.value }))}
+              />
+              <input
+                type="number"
+                placeholder="Order"
+                value={newBanner.order}
+                onChange={(e) => setNewBanner((b) => ({ ...b, order: e.target.value }))}
+                style={{ maxWidth: 100 }}
+              />
+              <button className="btn" type="submit">
+                Add banner
+              </button>
+            </form>
+          </div>
+
+          <div className="card">
+            {banners.length === 0 ? (
+              <div className="empty">
+                <div className="big">🖼️</div>
+                <p className="muted">No banners yet. Add one above.</p>
+              </div>
+            ) : (
+              <div className="data-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Art</th>
+                      <th>Title</th>
+                      <th>Link</th>
+                      <th>Order</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {banners.map((b) => (
+                      <tr key={b._id}>
+                        <td style={{ fontSize: 24 }}>
+                          {/^https?:\/\//i.test(b.image) ? (
+                            <img
+                              src={b.image}
+                              alt=""
+                              style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 8 }}
+                            />
+                          ) : (
+                            b.image || "🛍️"
+                          )}
+                        </td>
+                        <td>
+                          <div>{b.title}</div>
+                          <div className="small muted">{b.subtitle}</div>
+                        </td>
+                        <td className="small muted">{b.link}</td>
+                        <td>{b.order}</td>
+                        <td>
+                          {b.isActive ? (
+                            <span className="badge badge-green">Active</span>
+                          ) : (
+                            <span className="badge badge-amber">Hidden</span>
+                          )}
+                        </td>
+                        <td>
+                          <button className="btn btn-ghost btn-sm" onClick={() => toggleBanner(b)}>
+                            {b.isActive ? "Hide" : "Show"}
+                          </button>{" "}
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteBanner(b)}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

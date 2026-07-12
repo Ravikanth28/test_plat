@@ -5,6 +5,7 @@ import User from "./models/User.js";
 import Shop from "./models/Shop.js";
 import Product from "./models/Product.js";
 import Order from "./models/Order.js";
+import Banner from "./models/Banner.js";
 
 dotenv.config();
 
@@ -261,6 +262,43 @@ const shopDefs = [
   },
 ];
 
+// Placeholder ad banners for the home hero carousel. Admin can add/edit/remove
+// these from the Admin panel; images use emoji thumbnails by default.
+const bannerDefs = [
+  {
+    title: "Fresh groceries in minutes",
+    subtitle: "Fruits, veggies & daily staples delivered fast.",
+    image: "🥦",
+    link: "/?cat=grocery",
+    cta: "Shop groceries",
+    order: 1,
+  },
+  {
+    title: "Hot meals & biryani",
+    subtitle: "Order from your favourite local restaurants.",
+    image: "🍛",
+    link: "/?cat=food",
+    cta: "Order food",
+    order: 2,
+  },
+  {
+    title: "Medicines at your door",
+    subtitle: "Pharmacies delivering wellness essentials.",
+    image: "💊",
+    link: "/?cat=medical",
+    cta: "Shop medical",
+    order: 3,
+  },
+  {
+    title: "Cool juices & shakes",
+    subtitle: "Fresh-pressed juices, smoothies & mocktails.",
+    image: "🧃",
+    link: "/?cat=juice",
+    cta: "Grab a drink",
+    order: 4,
+  },
+];
+
 const run = async () => {
   await connectDB();
   console.log("Clearing existing data...");
@@ -269,7 +307,14 @@ const run = async () => {
     Shop.deleteMany({}),
     Product.deleteMany({}),
     Order.deleteMany({}),
+    Banner.deleteMany({}),
   ]);
+
+  // Seed home hero carousel banners.
+  await Banner.insertMany(
+    bannerDefs.map((b) => ({ ...b, isActive: true }))
+  );
+  console.log(`Created ${bannerDefs.length} hero banners`);
 
   // Admin
   await User.create({

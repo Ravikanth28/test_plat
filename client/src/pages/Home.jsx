@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import FavoriteButton from "../components/FavoriteButton.jsx";
 import GetAppBanner from "../components/GetAppBanner.jsx";
+import AdCarousel from "../components/AdCarousel.jsx";
 import {
   CATEGORIES,
   catIcon,
@@ -97,6 +98,14 @@ export default function Home() {
   const [minRating, setMinRating] = useState(0);
   // Sub-category chip within the chosen category ("all" = no sub-filter).
   const [sub, setSub] = useState("all");
+
+  // Hero ad banners link to /?cat=food etc. Apply that category when present so
+  // clicking a banner CTA filters the shop list.
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const cat = searchParams.get("cat");
+    if (cat && CATEGORIES.some((c) => c.key === cat)) setCategory(cat);
+  }, [searchParams]);
 
   // Reset the sub-category whenever the top-level category changes so a stale
   // chip (e.g. "Meals") doesn't linger after switching to Grocery.
@@ -199,21 +208,24 @@ export default function Home() {
   return (
     <div>
       <div className="hero">
-        <div className="container">
-          <h1>Groceries, food & essentials — delivered fast</h1>
-          <p className="sub">
-            From department stores, pharmacies, juice bars, restaurants & more near you.
-          </p>
-          <form className="search-bar" onSubmit={runSearch}>
-            <input
-              placeholder='Search "paracetamol", "dosa", "milk", "pens"...'
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <button className="btn" type="submit">
-              Search
-            </button>
-          </form>
+        <div className="container hero-inner">
+          <div className="hero-copy">
+            <h1>Groceries, food & essentials — delivered fast</h1>
+            <p className="sub">
+              From department stores, pharmacies, juice bars, restaurants & more near you.
+            </p>
+            <form className="search-bar" onSubmit={runSearch}>
+              <input
+                placeholder='Search "paracetamol", "dosa", "milk", "pens"...'
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="btn" type="submit">
+                Search
+              </button>
+            </form>
+          </div>
+          <AdCarousel />
         </div>
       </div>
 

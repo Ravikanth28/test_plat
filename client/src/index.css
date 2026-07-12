@@ -1621,6 +1621,114 @@ button {
 .search-bar input:focus {
   outline: none;
 }
+.search-bar {
+  margin-bottom: 0;
+}
+
+/* Hero two-column: copy/search on the left, ad carousel on the right. */
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 32px;
+  align-items: center;
+}
+.hero-copy {
+  min-width: 0;
+}
+
+/* Advertisement carousel (admin-managed banners). */
+.ad-carousel {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-lg);
+  min-height: 200px;
+}
+.ad-track {
+  position: relative;
+  height: 200px;
+}
+.ad-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 26px;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
+}
+.ad-slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.ad-art {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.22);
+  display: grid;
+  place-items: center;
+  font-size: 52px;
+  overflow: hidden;
+}
+.ad-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ad-copy {
+  min-width: 0;
+}
+.ad-copy h3 {
+  margin: 0 0 6px;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.ad-copy p {
+  margin: 0 0 10px;
+  font-size: 14px;
+  opacity: 0.95;
+}
+.ad-cta {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 800;
+  background: #fff;
+  color: var(--brand);
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+.ad-dots {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  display: flex;
+  gap: 7px;
+}
+.ad-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.2s, width 0.2s;
+}
+.ad-dot.active {
+  background: #fff;
+  width: 22px;
+  border-radius: 999px;
+}
 
 /* Category chips (kept for compatibility) */
 .chips {
@@ -2058,6 +2166,27 @@ th {
   background: var(--surface-2);
 }
 
+/* Admin: add-banner form */
+.banner-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.banner-form input {
+  flex: 1 1 180px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+}
+.banner-form input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
 /* Delivery hero (Checkout) */
 .mini-map {
   height: 120px;
@@ -2197,6 +2326,10 @@ th {
   }
   .footer .cols {
     grid-template-columns: 1fr 1fr;
+  }
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 }
 

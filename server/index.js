@@ -16,6 +16,7 @@ import orderRoutes from "./routes/orders.js";
 import adminRoutes from "./routes/admin.js";
 import favoriteRoutes from "./routes/favorites.js";
 import notificationRoutes from "./routes/notifications.js";
+import bannerRoutes from "./routes/banners.js";
 import { initPush } from "./utils/push.js";
 
 dotenv.config();
@@ -114,6 +115,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/banners", bannerRoutes);
 
 // Serve React build in production (single service on Render)
 if (process.env.NODE_ENV === "production") {

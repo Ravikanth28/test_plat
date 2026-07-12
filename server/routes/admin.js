@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Shop from "../models/Shop.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
+import Banner from "../models/Banner.js";
 import { protect, authorize } from "../middleware/auth.js";
 import { notify } from "../utils/notify.js";
 
@@ -126,6 +127,76 @@ router.delete("/shops/:id", async (req, res, next) => {
     await Product.deleteMany({ shop: req.params.id });
     await Shop.findByIdAndDelete(req.params.id);
     res.json({ message: "Shop and its products deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------------- BANNERS (home hero carousel ads) ----------------
+
+// GET /api/admin/banners  -> all banners (active + inactive)
+router.get("/banners", async (req, res, next) => {
+  try {
+    const banners = await Banner.find().sort({ order: 1, createdAt: 1 });
+    res.json(banners);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/banners  -> create a banner
+router.post("/banners", async (req, res, next) => {
+  try {
+    const { title, subtitle, image, link, cta, order, isActive } = req.body;
+    if (!title || !title.trim()) {
+      res.status(400);
+      throw new Error("Banner title is required");
+    }
+    const banner = await Banner.create({
+      title: title.trim(),
+      subtitle: subtitle || "",
+      image: image || "",
+      link: link || "/",
+      cta: cta || "Shop now",
+      order: Number(order) || 0,
+      isActive: isActive === undefined ? true : Boolean(isActive),
+    });
+    res.status(201).json(banner);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/admin/banners/:id  -> update a banner
+router.put("/banners/:id", async (req, res, next) => {
+  try {
+    const { title, subtitle, image, link, cta, order, isActive } = req.body;
+    const update = {};
+    if (title !== undefined) update.title = title.trim();
+    if (subtitle !== undefined) update.subtitle = subtitle;
+    if (image !== undefined) update.image = image;
+    if (link !== undefined) update.link = link;
+    if (cta !== undefined) update.cta = cta;
+    if (order !== undefined) update.order = Number(order) || 0;
+    if (isActive !== undefined) update.isActive = Boolean(isActive);
+    const banner = await Banner.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    });
+    if (!banner) {
+      res.status(404);
+      throw new Error("Banner not found");
+    }
+    res.json(banner);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/admin/banners/:id
+router.delete("/banners/:id", async (req, res, next) => {
+  try {
+    await Banner.findByIdAndDelete(req.params.id);
+    res.json({ message: "Banner deleted" });
   } catch (err) {
     next(err);
   }
