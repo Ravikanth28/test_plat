@@ -6,6 +6,103 @@
     <title>LocalMart - Your neighbourhood, delivered</title>
     <meta name="description" content="Order from local department stores, medical shops, stationery, juice and food outlets near you." />
 
+    <!--
+      Boot watchdog / self-heal. A returning visitor can be stuck on an old or
+      poisoned service worker that replays a broken cached response (e.g. a
+      transient 500 captured during a deploy) for the build-hashed JS/CSS. When
+      that happens the bundle never executes, React never mounts, #root stays
+      empty and the page is blank — and because the JS never runs, the in-app
+      SW-update logic in main.jsx can never fix it (a catch-22).
+
+      This script lives in index.html, which the server always sends fresh
+      (Cache-Control: no-store), so it runs even when the hashed assets are the
+      thing that's broken. It attaches a capturing error listener BEFORE any
+      asset tag is parsed: if a /assets/ script or stylesheet fails to load, or
+      the app simply hasn't mounted after a grace period, it purges all caches,
+      unregisters every service worker, and reloads ONCE (guarded by
+      sessionStorage to avoid a reload loop). The reload then loads cleanly from
+      the network with no SW in the way — no manual cache-clearing needed.
+    -->
+    <script>
+      (function () {
+        var recovered = false;
+        try {
+          recovered = sessionStorage.getItem("lm_recovered") === "1";
+        } catch (e) {}
+        function recover() {
+          if (recovered) return;
+          recovered = true;
+          try {
+            sessionStorage.setItem("lm_recovered", "1");
+          } catch (e) {}
+          var reload = function () {
+            location.reload();
+          };
+          var jobs = [];
+          if (window.caches && caches.keys) {
+            jobs.push(
+              caches.keys().then(function (keys) {
+                return Promise.all(
+                  keys.map(function (k) {
+                    return caches.delete(k);
+                  })
+                );
+              })
+            );
+          }
+          if (
+            navigator.serviceWorker &&
+            navigator.serviceWorker.getRegistrations
+          ) {
+            jobs.push(
+              navigator.serviceWorker
+                .getRegistrations()
+                .then(function (regs) {
+                  return Promise.all(
+                    regs.map(function (r) {
+                      return r.unregister();
+                    })
+                  );
+                })
+            );
+          }
+          Promise.all(jobs).then(reload, reload);
+        }
+        // A build-hashed asset failing to load is a hard boot failure — recover
+        // immediately rather than waiting for the grace-period fallback.
+        window.addEventListener(
+          "error",
+          function (ev) {
+            var t = ev && ev.target;
+            if (!t) return;
+            var url = t.src || t.href || "";
+            if (
+              (t.tagName === "SCRIPT" || t.tagName === "LINK") &&
+              url.indexOf("/assets/") !== -1
+            ) {
+              recover();
+            }
+          },
+          true
+        );
+        // Safety net: if nothing errored but the app still isn't on screen,
+        // recover. If it mounted fine, clear the guard so a FUTURE breakage can
+        // heal again.
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            var root = document.getElementById("root");
+            if (root && root.childElementCount > 0) {
+              try {
+                sessionStorage.removeItem("lm_recovered");
+              } catch (e) {}
+            } else {
+              recover();
+            }
+          }, 8000);
+        });
+      })();
+    </script>
+
     <!-- Set theme before first paint to avoid a flash of the wrong theme. -->
     <script>
       (function () {

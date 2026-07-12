@@ -1,6 +1,6 @@
 // LocalMart service worker — enables installability (PWA) and basic offline.
 // Strategy: network-first for navigation & API, cache-first for static assets.
-const CACHE = "localmart-v7";
+const CACHE = "localmart-v8";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
