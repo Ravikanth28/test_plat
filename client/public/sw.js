@@ -1,6 +1,6 @@
 // LocalMart service worker — enables installability (PWA) and basic offline.
 // Strategy: network-first for navigation & API, cache-first for static assets.
-const CACHE = "localmart-v5";
+const CACHE = "localmart-v6";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -37,14 +37,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first, then network (and cache the result).
+  // Static assets: cache-first, then network. Only cache SUCCESSFUL responses
+  // (res.ok) so a transient 5xx/404 during a deploy is never stored and then
+  // replayed cache-first forever — the bug that caused the blank page.
   event.respondWith(
     caches.match(request).then(
       (cached) =>
         cached ||
         fetch(request).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
           return res;
         })
     )
