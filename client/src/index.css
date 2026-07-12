@@ -1636,18 +1636,22 @@ button {
   min-width: 0;
 }
 
-/* Advertisement carousel (admin-managed banners). */
+/* Advertisement carousel (admin-managed banners). A solid light card so it
+   pops out of the coral hero instead of blending into it. */
 .ad-carousel {
   position: relative;
   border-radius: 18px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: var(--shadow-lg);
-  min-height: 200px;
+  /* Fixed white in both themes: the hero is always coral, so a light card
+     pops and keeps the coloured tiles readable (avoids the dark-mode black). */
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(16, 17, 21, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  min-height: 210px;
 }
 .ad-track {
   position: relative;
-  height: 200px;
+  height: 210px;
 }
 .ad-slide {
   position: absolute;
@@ -1656,7 +1660,7 @@ button {
   align-items: center;
   gap: 18px;
   padding: 24px 26px;
-  color: #fff;
+  color: #1c1c1c;
   text-decoration: none;
   opacity: 0;
   transform: translateX(12px);
@@ -1670,14 +1674,32 @@ button {
 }
 .ad-art {
   flex: 0 0 auto;
-  width: 96px;
-  height: 96px;
+  width: 104px;
+  height: 104px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.22);
   display: grid;
   place-items: center;
-  font-size: 52px;
+  font-size: 54px;
   overflow: hidden;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(16, 17, 21, 0.18);
+  background: linear-gradient(135deg, var(--brand), #ff6a4d);
+}
+/* Rotating accent palette so each ad tile has its own colour identity. */
+.ad-slide:nth-of-type(5n + 1) .ad-art {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+.ad-slide:nth-of-type(5n + 2) .ad-art {
+  background: linear-gradient(135deg, #e23744, #ff6a4d);
+}
+.ad-slide:nth-of-type(5n + 3) .ad-art {
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+}
+.ad-slide:nth-of-type(5n + 4) .ad-art {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+}
+.ad-slide:nth-of-type(5n + 5) .ad-art {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
 }
 .ad-art img {
   width: 100%;
@@ -1692,20 +1714,22 @@ button {
   font-size: 21px;
   font-weight: 800;
   line-height: 1.2;
+  color: #0f1115;
 }
 .ad-copy p {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 14px;
-  opacity: 0.95;
+  color: #6b7280;
 }
 .ad-cta {
   display: inline-block;
   font-size: 13px;
   font-weight: 800;
-  background: #fff;
-  color: var(--brand);
-  padding: 6px 14px;
+  background: #e23744;
+  color: #fff;
+  padding: 8px 16px;
   border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(226, 55, 68, 0.35);
 }
 .ad-dots {
   position: absolute;
@@ -1720,12 +1744,12 @@ button {
   border-radius: 50%;
   border: none;
   padding: 0;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(15, 17, 21, 0.28);
   cursor: pointer;
   transition: background 0.2s, width 0.2s;
 }
 .ad-dot.active {
-  background: #fff;
+  background: #e23744;
   width: 22px;
   border-radius: 999px;
 }
