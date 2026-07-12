@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
+import BackBar from "./components/BackBar.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import UpdateBanner from "./components/UpdateBanner.jsx";
@@ -27,6 +28,7 @@ export default function App() {
       <NotificationToast />
       <Navbar />
       <main className="app-main">
+      <BackBar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop/:id" element={<ShopDetail />} />

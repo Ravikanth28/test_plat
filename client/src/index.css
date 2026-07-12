@@ -80,6 +80,36 @@ button {
   padding: 0 24px;
 }
 
+/* Global back bar (every page except Home) */
+.back-bar {
+  padding: 14px 0 0;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px 7px 11px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, transform 0.05s;
+}
+.back-btn:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+.back-btn:active {
+  transform: translateY(1px);
+}
+.back-btn span {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 /* Navbar */
 .navbar {
   background: var(--nav-bg);
@@ -2063,6 +2093,14 @@ th {
 
 @media (min-width: 821px) {
   .nav-mobile {
+    display: none;
+  }
+}
+
+/* Hide the header "Download App" button on narrower desktops to avoid
+   crowding — it's still reachable in the mobile drawer below 820px. */
+@media (max-width: 1040px) {
+  .nav-getapp {
     display: none;
   }
 }

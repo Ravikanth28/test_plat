@@ -112,6 +112,8 @@ export default function Navbar() {
             avatar menu that holds everything else (links, settings, theme,
             app install, logout). Logged-out users just get theme + Login. */}
         <div className="nav-links nav-desktop">
+          <DownloadApp className="btn btn-ghost btn-sm nav-getapp" />
+
           <Link to="/cart" className="nav-cart" title="Cart">
             🛒 <span>Cart</span>
             {count > 0 && <span className="cart-badge">{count}</span>}
@@ -149,7 +151,6 @@ export default function Navbar() {
 
                   <div className="avatar-panel-foot">
                     <ThemeToggle className="btn btn-ghost btn-sm btn-block" />
-                    <DownloadApp className="btn btn-ghost btn-sm btn-block" />
                     <InstallApp className="btn btn-ghost btn-sm btn-block" />
                     <button className="btn btn-danger btn-sm btn-block" onClick={handleLogout}>
                       Logout
