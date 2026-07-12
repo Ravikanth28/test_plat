@@ -12,7 +12,21 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "shopkeeper", "admin"],
       default: "customer",
     },
+    // Legacy single address (kept for back-compat: register form, old orders).
     address: { type: String, default: "" },
+    // Saved delivery address book. Each entry has a short label (Home/Work),
+    // the full address line, and optionally the pinned GPS coords so a repeat
+    // order can share precise location without re-fetching it.
+    addresses: [
+      {
+        label: { type: String, trim: true, default: "" },
+        line: { type: String, trim: true, required: true },
+        geo: {
+          lat: { type: Number },
+          lng: { type: Number },
+        },
+      },
+    ],
     // For shopkeepers: the shop they own (set after shop creation)
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
     // Customer's saved/favourite shops

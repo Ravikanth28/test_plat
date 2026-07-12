@@ -9,17 +9,35 @@ const DELIVERY_FEE = 20;
 
 export default function Checkout() {
   const { items, shopId, shopName, itemsTotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
-  const [address, setAddress] = useState(user?.address || "");
+  const saved = user?.addresses || [];
+  // Preselect the first saved address (if any); else fall back to legacy string.
+  const [address, setAddress] = useState(saved[0]?.line || user?.address || "");
+  const [selectedId, setSelectedId] = useState(saved[0]?._id || "");
+  const [saveAddr, setSaveAddr] = useState(saved.length === 0);
+  const [saveLabel, setSaveLabel] = useState("");
   const [phone, setPhone] = useState(user?.phone || "");
   const [method, setMethod] = useState("cod");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [geo, setGeo] = useState(null); // { lat, lng, accuracy }
+  const [geo, setGeo] = useState(
+    saved[0]?.geo?.lat != null
+      ? { lat: saved[0].geo.lat, lng: saved[0].geo.lng }
+      : null
+  ); // { lat, lng, accuracy }
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState("");
+
+  // Pick a saved address: fill the textarea + reuse its pinned coords (if any).
+  const pickSaved = (a) => {
+    setSelectedId(a._id);
+    setAddress(a.line);
+    setGeo(a.geo?.lat != null ? { lat: a.geo.lat, lng: a.geo.lng } : null);
+    setSaveAddr(false);
+    setLocMsg("");
+  };
 
   const total = itemsTotal + DELIVERY_FEE;
 
@@ -83,6 +101,7 @@ export default function Checkout() {
       async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         setGeo({ lat: latitude, lng: longitude, accuracy });
+        setSelectedId(""); // fresh location ≠ a saved entry
         setLocating(false);
         setLocMsg(`Location captured ✓ (±${Math.round(accuracy)}m)`);
         if (!address.trim()) {
@@ -114,6 +133,21 @@ export default function Checkout() {
     if (!address.trim()) return setError("Please enter a delivery address.");
     setBusy(true);
     try {
+      // Optionally save this address to the book (best-effort — never blocks
+      // the order if it fails).
+      if (saveAddr && address.trim()) {
+        try {
+          await api.post("/auth/me/addresses", {
+            label: saveLabel.trim(),
+            line: address.trim(),
+            geo: geo ? { lat: geo.lat, lng: geo.lng } : undefined,
+          });
+          await refreshUser();
+        } catch {
+          /* saving the address is optional */
+        }
+      }
+
       const { order, payment } = await api.post("/orders", {
         items: items.map((i) => ({ product: i.product, qty: i.qty })),
         shopId,
@@ -156,13 +190,43 @@ export default function Checkout() {
         <div>
           <div className="card mb">
             <h3 style={{ marginTop: 0 }}>📍 Delivery Details</h3>
+
+            {saved.length > 0 && (
+              <div className="field">
+                <label>Saved addresses</label>
+                <div className="addr-book">
+                  {saved.map((a) => (
+                    <button
+                      key={a._id}
+                      type="button"
+                      className={`addr-card ${selectedId === a._id ? "active" : ""}`}
+                      onClick={() => pickSaved(a)}
+                    >
+                      <span className="addr-card-label">
+                        {a.label || "Address"}
+                        {a.geo?.lat != null && (
+                          <span className="addr-pin" title="Pinned location">
+                            📍
+                          </span>
+                        )}
+                      </span>
+                      <span className="addr-card-line">{a.line}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mini-map">🗺️</div>
             <div className="field">
               <label>Delivery Address</label>
               <textarea
                 rows={3}
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setSelectedId(""); // typing = a new/edited address
+                }}
                 placeholder="House no, street, area, landmark..."
               />
               <button
@@ -185,6 +249,28 @@ export default function Checkout() {
                 </div>
               )}
             </div>
+
+            {/* Offer to save the address only when it isn't already a saved one. */}
+            {!selectedId && address.trim() && (
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label className="addr-save-row">
+                  <input
+                    type="checkbox"
+                    checked={saveAddr}
+                    onChange={(e) => setSaveAddr(e.target.checked)}
+                  />
+                  <span>Save this address for next time</span>
+                </label>
+                {saveAddr && (
+                  <input
+                    value={saveLabel}
+                    onChange={(e) => setSaveLabel(e.target.value)}
+                    placeholder="Label (e.g. Home, Work) — optional"
+                    style={{ marginTop: 8 }}
+                  />
+                )}
+              </div>
+            )}
             <div className="field" style={{ marginBottom: 0 }}>
               <label>Phone Number</label>
               <input

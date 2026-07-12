@@ -103,4 +103,77 @@ router.put("/me", protect, async (req, res, next) => {
   }
 });
 
+// Build a clean address sub-document from the request body, ignoring any
+// client-supplied fields we don't own (e.g. _id spoofing). Coordinates are
+// only kept when both lat/lng are finite numbers.
+function cleanAddress(body = {}) {
+  const line = typeof body.line === "string" ? body.line.trim() : "";
+  const label = typeof body.label === "string" ? body.label.trim().slice(0, 30) : "";
+  const addr = { label, line };
+  const lat = Number(body?.geo?.lat);
+  const lng = Number(body?.geo?.lng);
+  if (Number.isFinite(lat) && Number.isFinite(lng)) addr.geo = { lat, lng };
+  return addr;
+}
+
+// POST /api/auth/me/addresses  -> add a saved delivery address
+router.post("/me/addresses", protect, async (req, res, next) => {
+  try {
+    const addr = cleanAddress(req.body);
+    if (!addr.line) {
+      res.status(400);
+      throw new Error("Address line is required");
+    }
+    // Cap the book so a user can't balloon their document indefinitely.
+    if ((req.user.addresses || []).length >= 15) {
+      res.status(400);
+      throw new Error("You can save up to 15 addresses");
+    }
+    req.user.addresses.push(addr);
+    await req.user.save();
+    res.status(201).json({ user: sanitizeUser(req.user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/auth/me/addresses/:addrId  -> edit a saved address
+router.put("/me/addresses/:addrId", protect, async (req, res, next) => {
+  try {
+    const entry = req.user.addresses.id(req.params.addrId);
+    if (!entry) {
+      res.status(404);
+      throw new Error("Address not found");
+    }
+    const addr = cleanAddress(req.body);
+    if (!addr.line) {
+      res.status(400);
+      throw new Error("Address line is required");
+    }
+    entry.label = addr.label;
+    entry.line = addr.line;
+    entry.geo = addr.geo; // undefined clears the pin
+    await req.user.save();
+    res.json({ user: sanitizeUser(req.user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/auth/me/addresses/:addrId  -> remove a saved address
+router.delete("/me/addresses/:addrId", protect, async (req, res, next) => {
+  try {
+    const entry = req.user.addresses.id(req.params.addrId);
+    if (!entry) {
+      res.status(404);
+      throw new Error("Address not found");
+    }
+    entry.deleteOne();
+    await req.user.save();
+    res.json({ user: sanitizeUser(req.user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

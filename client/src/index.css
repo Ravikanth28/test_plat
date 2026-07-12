@@ -1495,6 +1495,58 @@ button {
 .veg-dot.nonveg::after {
   background: #dc2626;
 }
+
+/* Delivery address book — selectable saved-address cards */
+.addr-book {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.addr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.addr-card:hover {
+  border-color: var(--brand);
+}
+.addr-card.active {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-soft);
+}
+.addr-card-label {
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.addr-pin {
+  font-size: 12px;
+}
+.addr-card-line {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.addr-save-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.addr-save-row input {
+  width: auto;
+}
+
 .shops-main {
   min-width: 0;
 }

@@ -95,6 +95,103 @@ export default function SettingsPage() {
     navigate("/");
   };
 
+  // --- Address book ---------------------------------------------------------
+  const addresses = user?.addresses || [];
+  const [addrLabel, setAddrLabel] = useState("");
+  const [addrLine, setAddrLine] = useState("");
+  const [addrGeo, setAddrGeo] = useState(null); // { lat, lng }
+  const [addrBusy, setAddrBusy] = useState(false);
+  const [addrMsg, setAddrMsg] = useState("");
+  const [editId, setEditId] = useState(null); // null = add mode
+  const [locating, setLocating] = useState(false);
+
+  const resetAddrForm = () => {
+    setEditId(null);
+    setAddrLabel("");
+    setAddrLine("");
+    setAddrGeo(null);
+    setAddrMsg("");
+  };
+
+  const startEdit = (a) => {
+    setEditId(a._id);
+    setAddrLabel(a.label || "");
+    setAddrLine(a.line || "");
+    setAddrGeo(a.geo?.lat != null ? { lat: a.geo.lat, lng: a.geo.lng } : null);
+    setAddrMsg("");
+  };
+
+  const pinLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setAddrMsg("Location isn't supported on this device.");
+      return;
+    }
+    setLocating(true);
+    setAddrMsg("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setAddrGeo({ lat: latitude, lng: longitude });
+        setLocating(false);
+        setAddrMsg("Location pinned ✓");
+        if (!addrLine.trim()) {
+          try {
+            const r = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const j = await r.json();
+            if (j?.display_name) setAddrLine(j.display_name);
+          } catch {
+            /* reverse geocode is optional */
+          }
+        }
+      },
+      () => {
+        setLocating(false);
+        setAddrMsg("Couldn't get your location — type the address instead.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const submitAddress = async (e) => {
+    e.preventDefault();
+    if (!addrLine.trim()) {
+      setAddrMsg("Address line is required.");
+      return;
+    }
+    setAddrBusy(true);
+    setAddrMsg("");
+    const body = {
+      label: addrLabel.trim(),
+      line: addrLine.trim(),
+      geo: addrGeo ? { lat: addrGeo.lat, lng: addrGeo.lng } : undefined,
+    };
+    try {
+      if (editId) await api.put(`/auth/me/addresses/${editId}`, body);
+      else await api.post("/auth/me/addresses", body);
+      await refreshUser();
+      resetAddrForm();
+    } catch (err) {
+      setAddrMsg(err.message || "Couldn't save the address.");
+    } finally {
+      setAddrBusy(false);
+    }
+  };
+
+  const deleteAddress = async (id) => {
+    setAddrBusy(true);
+    try {
+      await api.del(`/auth/me/addresses/${id}`);
+      await refreshUser();
+      if (editId === id) resetAddrForm();
+    } catch (err) {
+      setAddrMsg(err.message || "Couldn't delete the address.");
+    } finally {
+      setAddrBusy(false);
+    }
+  };
+
   // --- Notification prefs ---------------------------------------------------
   const p = prefs || {};
   const mutedTypes = p.mutedTypes || [];
@@ -166,6 +263,117 @@ export default function SettingsPage() {
             <button className="btn" type="submit" disabled={saving || !dirty}>
               {saving ? "Saving…" : "Save changes"}
             </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Address book */}
+      <section className="card settings-card">
+        <h2>Delivery address book</h2>
+        <p className="muted small" style={{ marginTop: -6 }}>
+          Save the places you order to — pick one instantly at checkout.
+        </p>
+
+        {addresses.length > 0 && (
+          <div className="addr-book" style={{ marginBottom: 14 }}>
+            {addresses.map((a) => (
+              <div
+                key={a._id}
+                className={`addr-card ${editId === a._id ? "active" : ""}`}
+                style={{ cursor: "default" }}
+              >
+                <span className="addr-card-label">
+                  {a.label || "Address"}
+                  {a.geo?.lat != null && (
+                    <span className="addr-pin" title="Pinned location">
+                      📍
+                    </span>
+                  )}
+                </span>
+                <span className="addr-card-line">{a.line}</span>
+                <div className="row gap" style={{ marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => startEdit(a)}
+                    disabled={addrBusy}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => deleteAddress(a._id)}
+                    disabled={addrBusy}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form className="settings-form" onSubmit={submitAddress}>
+          <label className="field">
+            <span>Label</span>
+            <input
+              value={addrLabel}
+              onChange={(e) => setAddrLabel(e.target.value)}
+              placeholder="Home, Work, Mom's place…"
+            />
+          </label>
+          <label className="field">
+            <span>Address</span>
+            <textarea
+              value={addrLine}
+              onChange={(e) => setAddrLine(e.target.value)}
+              placeholder="House no, street, area, landmark…"
+              rows={2}
+            />
+          </label>
+          <div className="row gap wrap" style={{ alignItems: "center" }}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={pinLocation}
+              disabled={locating}
+            >
+              {locating ? "Locating…" : addrGeo ? "📍 Location pinned ✓" : "📍 Pin my location"}
+            </button>
+            {addrGeo && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setAddrGeo(null)}
+              >
+                Clear pin
+              </button>
+            )}
+          </div>
+
+          {addrMsg && (
+            <div
+              className={`settings-msg ${addrMsg.includes("✓") ? "ok" : "err"}`}
+            >
+              {addrMsg}
+            </div>
+          )}
+
+          <div className="settings-actions">
+            <button className="btn" type="submit" disabled={addrBusy || !addrLine.trim()}>
+              {addrBusy ? "Saving…" : editId ? "Update address" : "Add address"}
+            </button>
+            {editId && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={resetAddrForm}
+                disabled={addrBusy}
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </form>
       </section>

@@ -12,6 +12,12 @@ export const sanitizeUser = (user) => ({
   phone: user.phone,
   role: user.role,
   address: user.address,
+  addresses: (user.addresses || []).map((a) => ({
+    _id: a._id,
+    label: a.label || "",
+    line: a.line,
+    geo: a.geo && Number.isFinite(a.geo.lat) ? { lat: a.geo.lat, lng: a.geo.lng } : undefined,
+  })),
   shop: user.shop,
   favorites: (user.favorites || []).map((f) => (f && f._id ? f._id.toString() : f.toString())),
 });
