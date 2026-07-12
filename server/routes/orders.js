@@ -269,6 +269,102 @@ router.get("/shop", protect, authorize("shopkeeper", "admin"), async (req, res, 
   }
 });
 
+// GET /api/orders/shop/analytics  -> sales analytics for the shopkeeper's shop
+// Aggregates delivered/paid revenue, orders-per-day, top products, and a status
+// breakdown so the dashboard can render charts without a client-side crunch.
+router.get(
+  "/shop/analytics",
+  protect,
+  authorize("shopkeeper", "admin"),
+  async (req, res, next) => {
+    try {
+      const shop = await Shop.findOne({ owner: req.user._id });
+      if (!shop) {
+        return res.json({
+          hasShop: false,
+          totals: { revenue: 0, orders: 0, delivered: 0, avgOrder: 0, items: 0 },
+          byDay: [],
+          topProducts: [],
+          statusBreakdown: [],
+        });
+      }
+
+      const orders = await Order.find({ shop: shop._id }).sort({ createdAt: 1 });
+
+      // "Earned" revenue = orders that actually completed (delivered). Cancelled
+      // orders never count; in-flight orders are tracked separately as pipeline.
+      const isEarned = (o) => o.status === "delivered";
+
+      let revenue = 0;
+      let itemsSold = 0;
+      let deliveredCount = 0;
+      const dayMap = new Map(); // yyyy-mm-dd -> { revenue, orders }
+      const prodMap = new Map(); // name -> { qty, revenue }
+      const statusMap = new Map();
+
+      // Seed the last 14 days so the chart shows a continuous axis even on
+      // days with zero orders.
+      const DAYS = 14;
+      const today = new Date();
+      for (let i = DAYS - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        dayMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+
+      for (const o of orders) {
+        statusMap.set(o.status, (statusMap.get(o.status) || 0) + 1);
+
+        if (!isEarned(o)) continue;
+        deliveredCount += 1;
+        revenue += o.total;
+
+        const key = new Date(o.createdAt).toISOString().slice(0, 10);
+        if (dayMap.has(key)) {
+          const row = dayMap.get(key);
+          row.revenue += o.total;
+          row.orders += 1;
+        }
+
+        for (const it of o.items || []) {
+          itemsSold += it.qty || 0;
+          const p = prodMap.get(it.name) || { name: it.name, qty: 0, revenue: 0 };
+          p.qty += it.qty || 0;
+          p.revenue += (it.price || 0) * (it.qty || 0);
+          prodMap.set(it.name, p);
+        }
+      }
+
+      const topProducts = [...prodMap.values()]
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 6);
+
+      const statusBreakdown = [...statusMap.entries()].map(([status, count]) => ({
+        status,
+        count,
+      }));
+
+      res.json({
+        hasShop: true,
+        shopName: shop.name,
+        totals: {
+          revenue,
+          orders: orders.length,
+          delivered: deliveredCount,
+          avgOrder: deliveredCount ? Math.round(revenue / deliveredCount) : 0,
+          items: itemsSold,
+        },
+        byDay: [...dayMap.values()],
+        topProducts,
+        statusBreakdown,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // GET /api/orders/:id  -> single order (owner customer, shop owner, or admin)
 router.get("/:id", protect, async (req, res, next) => {
   try {

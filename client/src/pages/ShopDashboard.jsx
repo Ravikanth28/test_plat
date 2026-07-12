@@ -20,6 +20,7 @@ export default function ShopDashboard() {
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
 
@@ -38,6 +39,13 @@ export default function ShopDashboard() {
   useEffect(() => {
     loadAll().catch(() => setLoading(false));
   }, []);
+
+  // Fetch analytics lazily the first time the tab is opened (and refresh on
+  // re-open so numbers stay current after advancing orders).
+  useEffect(() => {
+    if (tab !== "analytics") return;
+    api.get("/orders/shop/analytics").then(setAnalytics).catch(() => {});
+  }, [tab]);
 
   const advance = async (order) => {
     const next = NEXT_STATUS[order.status];
@@ -107,6 +115,9 @@ export default function ShopDashboard() {
         </button>
         <button className={`tab ${tab === "products" ? "active" : ""}`} onClick={() => setTab("products")}>
           Products ({products.length})
+        </button>
+        <button className={`tab ${tab === "analytics" ? "active" : ""}`} onClick={() => setTab("analytics")}>
+          📊 Analytics
         </button>
       </div>
 
@@ -191,6 +202,106 @@ export default function ShopDashboard() {
           setMsg={setMsg}
         />
       )}
+
+      {tab === "analytics" && <ShopAnalytics data={analytics} />}
+    </div>
+  );
+}
+
+function ShopAnalytics({ data }) {
+  if (!data) return <div className="loading">Crunching your numbers...</div>;
+
+  const { totals, byDay, topProducts, statusBreakdown } = data;
+  const maxDay = Math.max(1, ...byDay.map((d) => d.revenue));
+  const maxProd = Math.max(1, ...topProducts.map((p) => p.revenue));
+
+  return (
+    <div>
+      {/* Headline KPIs */}
+      <div className="kpi-grid mb">
+        <div className="card kpi">
+          <div className="kpi-label">Revenue (delivered)</div>
+          <div className="kpi-value">{rupee(totals.revenue)}</div>
+        </div>
+        <div className="card kpi">
+          <div className="kpi-label">Delivered orders</div>
+          <div className="kpi-value">{totals.delivered}</div>
+        </div>
+        <div className="card kpi">
+          <div className="kpi-label">Avg order value</div>
+          <div className="kpi-value">{rupee(totals.avgOrder)}</div>
+        </div>
+        <div className="card kpi">
+          <div className="kpi-label">Items sold</div>
+          <div className="kpi-value">{totals.items}</div>
+        </div>
+      </div>
+
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
+        {/* Revenue over the last 14 days */}
+        <div className="card mb">
+          <h3 style={{ marginTop: 0 }}>Revenue · last 14 days</h3>
+          {totals.revenue === 0 ? (
+            <p className="muted small">No delivered revenue yet.</p>
+          ) : (
+            <div className="bar-chart">
+              {byDay.map((d) => (
+                <div className="bar-col" key={d.date} title={`${d.date}: ${rupee(d.revenue)}`}>
+                  <div className="bar-track">
+                    <div
+                      className="bar-fill"
+                      style={{ height: `${(d.revenue / maxDay) * 100}%` }}
+                    />
+                  </div>
+                  <div className="bar-x">{d.date.slice(8)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Order status mix */}
+        <div className="card mb">
+          <h3 style={{ marginTop: 0 }}>Order status mix</h3>
+          {statusBreakdown.length === 0 ? (
+            <p className="muted small">No orders yet.</p>
+          ) : (
+            statusBreakdown.map((s) => (
+              <div className="row between" key={s.status} style={{ padding: "6px 0" }}>
+                <span className={`badge ${statusBadgeClass(s.status)}`}>
+                  {statusLabel(s.status)}
+                </span>
+                <strong>{s.count}</strong>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Top products by revenue */}
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Top products by revenue</h3>
+        {topProducts.length === 0 ? (
+          <p className="muted small">No sales yet — top products will show here.</p>
+        ) : (
+          topProducts.map((p) => (
+            <div className="top-prod" key={p.name}>
+              <div className="row between">
+                <span>{p.name}</span>
+                <span className="muted small">
+                  {p.qty} sold · {rupee(p.revenue)}
+                </span>
+              </div>
+              <div className="track-progress" style={{ margin: "6px 0 0" }}>
+                <div
+                  className="track-progress-fill"
+                  style={{ width: `${(p.revenue / maxProd) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
