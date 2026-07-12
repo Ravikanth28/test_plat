@@ -108,6 +108,19 @@ if (process.env.NODE_ENV === "production") {
   const clientDist = path.join(__dirname, "..", "client", "dist");
   app.use(express.static(clientDist));
   app.get("*", (req, res) => {
+    // A request for a hashed asset that reached here means the file does not
+    // exist (a stale client is asking for an old build's chunk). Return a clean
+    // 404 instead of the SPA index.html — otherwise the browser executes HTML
+    // as a JS module ("Failed to load module script" MIME error) and the page
+    // renders blank. Only genuine SPA routes (no file extension) get index.html.
+    if (path.extname(req.path)) {
+      res.status(404).type("text/plain").send("Not found");
+      return;
+    }
+    // index.html must never be cached stale: it points at build-hashed assets
+    // that change every deploy. no-store forces the browser to always fetch the
+    // current shell, so it can never reference a chunk the server no longer has.
+    res.set("Cache-Control", "no-store, must-revalidate");
     res.sendFile(path.join(clientDist, "index.html"));
   });
 } else {
