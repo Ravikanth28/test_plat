@@ -15,6 +15,82 @@ const NEXT_LABEL = {
   out_for_delivery: "Mark Delivered",
 };
 
+// Downscale an uploaded image on the client to a small JPEG data URL so we can
+// store it inline (no file server needed) without bloating the DB.
+function downscaleImage(file, maxSize = 400, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("Couldn't read that image."));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("Couldn't read that file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Minimal CSV parser supporting quoted fields, escaped quotes ("") and commas
+// inside quotes. Returns an array of row-objects keyed by the header row.
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      row.push(field);
+      field = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field);
+      field = "";
+      if (row.some((v) => v.trim() !== "")) rows.push(row);
+      row = [];
+    } else {
+      field += c;
+    }
+  }
+  if (field !== "" || row.length) {
+    row.push(field);
+    if (row.some((v) => v.trim() !== "")) rows.push(row);
+  }
+  if (rows.length < 2) return [];
+  const headers = rows[0].map((h) => h.trim().toLowerCase());
+  return rows.slice(1).map((r) => {
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h] = (r[idx] ?? "").trim();
+    });
+    return obj;
+  });
+}
+
 export default function ShopDashboard() {
   const [tab, setTab] = useState("orders");
   const [shop, setShop] = useState(null);
@@ -408,10 +484,26 @@ function CreateShop({ onCreated }) {
 }
 
 function ProductManager({ products, setProducts, msg, setMsg }) {
-  const empty = { name: "", price: "", unit: "piece", category: "general", description: "", stock: 100, isVeg: true };
+  const empty = { name: "", price: "", unit: "piece", category: "general", description: "", stock: 100, isVeg: true, image: "" };
   const [form, setForm] = useState(empty);
   const [editId, setEditId] = useState(null);
+  const [imgBusy, setImgBusy] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const pickImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImgBusy(true);
+    setMsg("");
+    try {
+      const dataUrl = await downscaleImage(file);
+      setForm((f) => ({ ...f, image: dataUrl }));
+    } catch (err) {
+      setMsg(err.message);
+    } finally {
+      setImgBusy(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -443,6 +535,7 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
       description: p.description,
       stock: p.stock ?? 100,
       isVeg: p.isVeg !== false,
+      image: p.image || "",
     });
   };
 
@@ -511,7 +604,27 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
             </button>
           </div>
         </div>
-        <button className="btn btn-block">{editId ? "Update" : "Add Product"}</button>
+        <div className="field">
+          <label>Product image</label>
+          {form.image ? (
+            <div className="img-upload">
+              <img src={form.image} alt="" className="img-preview" />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setForm((f) => ({ ...f, image: "" }))}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <input type="file" accept="image/*" onChange={pickImage} disabled={imgBusy} />
+          )}
+          {imgBusy && <div className="muted small" style={{ marginTop: 4 }}>Processing image…</div>}
+        </div>
+        <button className="btn btn-block" disabled={imgBusy}>
+          {editId ? "Update" : "Add Product"}
+        </button>
         {editId && (
           <button
             type="button"
@@ -526,6 +639,8 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
         )}
       </form>
 
+      <div>
+      <CsvImport setProducts={setProducts} setMsg={setMsg} />
       <div className="card">
         {products.length === 0 ? (
           <div className="empty">
@@ -578,6 +693,96 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
           </div>
         )}
       </div>
+      </div>
+    </div>
+  );
+}
+
+function CsvImport({ setProducts, setMsg }) {
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setResult(null);
+    setMsg("");
+    try {
+      const text = await file.text();
+      const rows = parseCsv(text);
+      if (rows.length === 0) {
+        setResult({ error: "No rows found. Include a header row: name,price,unit,category,description,stock,isVeg" });
+        return;
+      }
+      const products = rows.map((r) => ({
+        name: r.name || r.title || "",
+        price: r.price,
+        unit: r.unit || "piece",
+        category: r.category || "general",
+        description: r.description || "",
+        stock: r.stock !== undefined && r.stock !== "" ? Number(r.stock) : 100,
+        isVeg: /^(false|no|non-veg|nonveg|0)$/i.test(String(r.isveg ?? r.isVeg ?? "").trim())
+          ? false
+          : true,
+      }));
+      const res = await api.post("/products/bulk", { products });
+      if (res.products?.length) {
+        setProducts((prev) => [...res.products, ...prev]);
+      }
+      setResult({ created: res.created, skipped: res.skipped, errors: res.errors || [] });
+      setMsg(`Imported ${res.created} product${res.created === 1 ? "" : "s"}.`);
+    } catch (err) {
+      setResult({ error: err.message });
+    } finally {
+      setBusy(false);
+      e.target.value = "";
+    }
+  };
+
+  return (
+    <div className="card mb">
+      <div className="row between" style={{ alignItems: "center" }}>
+        <h3 style={{ margin: 0 }}>📄 Bulk import (CSV)</h3>
+        <button className="btn btn-ghost btn-sm" onClick={() => setOpen((o) => !o)}>
+          {open ? "Hide" : "Import CSV"}
+        </button>
+      </div>
+      {open && (
+        <div style={{ marginTop: 10 }}>
+          <p className="muted small" style={{ marginTop: 0 }}>
+            Upload a CSV with a header row. Columns:{" "}
+            <code>name, price, unit, category, description, stock, isVeg</code>. Only{" "}
+            <code>name</code> and <code>price</code> are required.
+          </p>
+          <input type="file" accept=".csv,text/csv" onChange={onFile} disabled={busy} />
+          {busy && <div className="muted small" style={{ marginTop: 6 }}>Importing…</div>}
+          {result && (
+            <div style={{ marginTop: 10 }}>
+              {result.error ? (
+                <div className="error">{result.error}</div>
+              ) : (
+                <>
+                  <div className="success">
+                    Added {result.created}
+                    {result.skipped ? ` · skipped ${result.skipped}` : ""}
+                  </div>
+                  {result.errors?.length > 0 && (
+                    <ul className="muted small" style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                      {result.errors.slice(0, 8).map((er, i) => (
+                        <li key={i}>
+                          Row {er.row}: {er.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

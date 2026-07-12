@@ -83,6 +83,51 @@ router.post("/", protect, authorize("shopkeeper", "admin"), async (req, res, nex
   }
 });
 
+// POST /api/products/bulk  -> create many products at once (CSV import)
+// Accepts { products: [{ name, price, ... }] }. Rows missing a name or a valid
+// price are skipped and reported back so the shopkeeper can fix them.
+router.post("/bulk", protect, authorize("shopkeeper", "admin"), async (req, res, next) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) {
+      res.status(400);
+      throw new Error("Create your shop first");
+    }
+    const rows = Array.isArray(req.body?.products) ? req.body.products : [];
+    if (rows.length === 0) {
+      res.status(400);
+      throw new Error("No product rows provided");
+    }
+    if (rows.length > 500) {
+      res.status(400);
+      throw new Error("Too many rows — import up to 500 at a time");
+    }
+
+    const docs = [];
+    const errors = [];
+    rows.forEach((row, i) => {
+      const fields = pickProductFields(row);
+      const name = String(fields.name || "").trim();
+      const price = Number(fields.price);
+      if (!name) {
+        errors.push({ row: i + 1, reason: "Missing name" });
+        return;
+      }
+      if (!Number.isFinite(price) || price < 0) {
+        errors.push({ row: i + 1, reason: "Invalid price" });
+        return;
+      }
+      docs.push({ ...fields, name, price, shop: shop._id });
+    });
+
+    let created = [];
+    if (docs.length) created = await Product.insertMany(docs);
+    res.status(201).json({ created: created.length, skipped: errors.length, errors, products: created });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PUT /api/products/:id
 router.put("/:id", protect, authorize("shopkeeper", "admin"), async (req, res, next) => {
   try {
