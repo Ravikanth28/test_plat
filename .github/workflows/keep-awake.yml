@@ -1,0 +1,29 @@
+name: Keep Render awake
+
+# Render free web services spin down after ~15 minutes without inbound
+# traffic, causing a slow cold start on the next visit. This workflow pings
+# the health endpoint on a schedule so the instance stays warm.
+#
+# NOTE: GitHub Actions cron runs at most once every 5 minutes (and may be
+# delayed under load). Since Render only sleeps after 15 min of inactivity,
+# every 5 minutes is more than enough — a 1-minute schedule is not supported
+# by GitHub and would provide no extra benefit.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # every 5 minutes
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          echo "Pinging LocalMart at $(date -u)"
+          code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 90 \
+            https://localmart-7foy.onrender.com/api/health)
+          echo "HTTP status: $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::Unexpected status $code (service may still be waking)"
+          fi
