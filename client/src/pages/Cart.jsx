@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 import { rupee } from "../utils.js";
 
 const DELIVERY_FEE = 20;
@@ -9,6 +10,7 @@ export default function Cart() {
   const { items, shopName, addItem, decItem, removeItem, itemsTotal, clearCart } =
     useCart();
   const { user } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
 
   if (items.length === 0) {
@@ -16,10 +18,10 @@ export default function Cart() {
       <div className="container">
         <div className="card empty" style={{ marginTop: 40 }}>
           <div className="big">🛒</div>
-          <h2 style={{ margin: "0 0 6px" }}>Your cart is empty</h2>
+          <h2 style={{ margin: "0 0 6px" }}>{t("cart.empty")}</h2>
           <p className="muted">Browse shops and add items to get started.</p>
           <Link to="/" className="btn mt">
-            Explore Shops
+            {t("cart.browse")}
           </Link>
         </div>
       </div>
@@ -38,7 +40,7 @@ export default function Cart() {
     <div className="container">
       <div className="page-head">
         <div>
-          <h1>Your Cart</h1>
+          <h1>{t("cart.title")}</h1>
           <p className="sub">
             From <strong>{shopName}</strong>
           </p>
@@ -94,12 +96,12 @@ export default function Cart() {
           <h3 style={{ margin: "0 0 12px" }}>Bill Details</h3>
           <div className="line">
             <span>
-              Items Total ({items.reduce((n, i) => n + i.qty, 0)})
+              {t("cart.itemsTotal")} ({items.reduce((n, i) => n + i.qty, 0)})
             </span>
             <span>{rupee(itemsTotal)}</span>
           </div>
           <div className="line">
-            <span>Delivery Fee</span>
+            <span>{t("cart.deliveryFee")}</span>
             <span>{rupee(DELIVERY_FEE)}</span>
           </div>
           <div className="line total">
@@ -107,7 +109,7 @@ export default function Cart() {
             <span className="price">{rupee(itemsTotal + DELIVERY_FEE)}</span>
           </div>
           <button className="btn btn-block mt" onClick={goCheckout}>
-            Proceed to Checkout →
+            {t("cart.checkout")} →
           </button>
           <Link
             to="/"

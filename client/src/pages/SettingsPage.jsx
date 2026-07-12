@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useNotifications, TONES } from "../context/NotificationContext.jsx";
 import { api } from "../api.js";
 import ThemeToggle from "../components/ThemeToggle.jsx";
+import LanguageToggle from "../components/LanguageToggle.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 
 // Human labels + icons for the per-type notification toggles.
 const TYPE_LABELS = {
@@ -41,6 +43,7 @@ const hhmmToMinutes = (s) => {
 
 export default function SettingsPage() {
   const { user, logout, refreshUser } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const {
     soundOn,
@@ -206,7 +209,7 @@ export default function SettingsPage() {
   return (
     <div className="container mt settings-page">
       <div className="page-head">
-        <h1>Settings</h1>
+        <h1>{t("settings.title")}</h1>
         <p className="muted">Manage your profile, notifications, and appearance.</p>
       </div>
 
@@ -525,12 +528,24 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Appearance */}
+      {/* Language */}
       <section className="card settings-card">
-        <h2>Appearance</h2>
+        <h2>{t("settings.language")}</h2>
         <div className="notif-row">
           <span>
-            <strong>Theme</strong>
+            <strong>{t("settings.language")}</strong>
+            <span className="muted small">{t("settings.languageHint")}</span>
+          </span>
+          <LanguageToggle className="btn btn-ghost btn-sm" />
+        </div>
+      </section>
+
+      {/* Appearance */}
+      <section className="card settings-card">
+        <h2>{t("settings.theme")}</h2>
+        <div className="notif-row">
+          <span>
+            <strong>{t("settings.theme")}</strong>
             <span className="muted small">Switch between light and dark mode</span>
           </span>
           <ThemeToggle className="btn btn-ghost btn-sm" />

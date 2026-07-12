@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 
 export default function Register() {
   const { register } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -57,7 +59,7 @@ export default function Register() {
 
       <div className="auth-main">
       <form className="form" onSubmit={submit}>
-        <h1>Create your account</h1>
+        <h1>{t("auth.registerTitle")}</h1>
         <p className="muted small" style={{ marginTop: 0, marginBottom: 18 }}>
           It only takes a minute
         </p>
@@ -67,7 +69,7 @@ export default function Register() {
           <input value={form.name} onChange={set("name")} required />
         </div>
         <div className="field">
-          <label>Email</label>
+          <label>{t("auth.email")}</label>
           <input type="email" value={form.email} onChange={set("email")} required />
         </div>
         <div className="field">
@@ -98,12 +100,12 @@ export default function Register() {
           </div>
         )}
         <button className="btn btn-block" disabled={busy}>
-          {busy ? "Creating..." : "Register"}
+          {busy ? "Creating..." : t("auth.signUp")}
         </button>
         <p className="center small mt">
-          Already have an account?{" "}
+          {t("auth.haveAccount")}{" "}
           <Link to="/login" style={{ color: "var(--brand)", fontWeight: 700 }}>
-            Login
+            {t("auth.signIn")}
           </Link>
         </p>
         {form.role === "shopkeeper" && (

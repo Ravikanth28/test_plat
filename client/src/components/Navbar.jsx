@@ -3,16 +3,19 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 import { api } from "../api.js";
 import { rupee, catIcon } from "../utils.js";
 import InstallApp from "./InstallApp.jsx";
 import DownloadApp from "./DownloadApp.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
+import LanguageToggle from "./LanguageToggle.jsx";
 import NotificationBell from "./NotificationBell.jsx";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { count } = useCart();
+  const { t } = useLang();
   const navigate = useNavigate();
   const location = useLocation();
   const [drawer, setDrawer] = useState(false);
@@ -123,26 +126,26 @@ export default function Navbar() {
   const roleLinks = (onClick) => (
     <>
       <Link to="/" onClick={onClick}>
-        Home
+        {t("nav.home")}
       </Link>
       {(!user || user.role === "customer") && (
         <Link to="/favorites" onClick={onClick}>
-          Favorites
+          {t("nav.favorites")}
         </Link>
       )}
       {user?.role === "customer" && (
         <Link to="/orders" onClick={onClick}>
-          My Orders
+          {t("nav.orders")}
         </Link>
       )}
       {user?.role === "shopkeeper" && (
         <Link to="/shop" onClick={onClick}>
-          Shop Dashboard
+          {t("nav.shop")}
         </Link>
       )}
       {user?.role === "admin" && (
         <Link to="/admin" onClick={onClick}>
-          Admin
+          {t("nav.admin")}
         </Link>
       )}
     </>
@@ -166,7 +169,7 @@ export default function Navbar() {
                 setSugOpen(true);
               }}
               onFocus={() => setSugOpen(true)}
-              placeholder="Search shops & products…"
+              placeholder={t("nav.search")}
               aria-label="Search"
             />
           </form>
@@ -174,15 +177,17 @@ export default function Navbar() {
           {sugOpen && term.trim().length >= 2 && (
             <div className="search-suggest">
               {sugLoading && !hasSug && (
-                <div className="ss-empty muted small">Searching…</div>
+                <div className="ss-empty muted small">{t("nav.searching")}</div>
               )}
               {!sugLoading && !hasSug && (
-                <div className="ss-empty muted small">No matches for “{term.trim()}”</div>
+                <div className="ss-empty muted small">
+                  {t("nav.noMatches")} — “{term.trim()}”
+                </div>
               )}
 
               {sug.shops.length > 0 && (
                 <div className="ss-group">
-                  <div className="ss-head">Shops</div>
+                  <div className="ss-head">{t("nav.shops")}</div>
                   {sug.shops.map((s) => (
                     <button
                       key={s._id}
@@ -202,7 +207,7 @@ export default function Navbar() {
 
               {sug.products.length > 0 && (
                 <div className="ss-group">
-                  <div className="ss-head">Products</div>
+                  <div className="ss-head">{t("nav.products")}</div>
                   {sug.products.map((p) => (
                     <button
                       key={p._id}
@@ -226,7 +231,7 @@ export default function Navbar() {
                   className="ss-all"
                   onClick={() => goTo(`/search?q=${encodeURIComponent(term.trim())}`)}
                 >
-                  See all results for “{term.trim()}” →
+                  {t("nav.seeAll")} — “{term.trim()}” →
                 </button>
               )}
             </div>
@@ -239,8 +244,8 @@ export default function Navbar() {
         <div className="nav-links nav-desktop">
           <DownloadApp className="btn btn-ghost btn-sm nav-getapp" />
 
-          <Link to="/cart" className="nav-cart" title="Cart">
-            🛒 <span>Cart</span>
+          <Link to="/cart" className="nav-cart" title={t("nav.cart")}>
+            🛒 <span>{t("nav.cart")}</span>
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
 
@@ -250,7 +255,7 @@ export default function Navbar() {
             <div className="avatar-menu" ref={menuRef}>
               <button
                 className="avatar-btn"
-                aria-label="Account menu"
+                aria-label={t("nav.account")}
                 aria-expanded={menu}
                 onClick={() => setMenu((m) => !m)}
               >
@@ -270,15 +275,16 @@ export default function Navbar() {
                   <div className="avatar-links">
                     {roleLinks(() => setMenu(false))}
                     <Link to="/settings" onClick={() => setMenu(false)}>
-                      ⚙️ Settings
+                      ⚙️ {t("nav.settings")}
                     </Link>
                   </div>
 
                   <div className="avatar-panel-foot">
+                    <LanguageToggle className="btn btn-ghost btn-sm btn-block" />
                     <ThemeToggle className="btn btn-ghost btn-sm btn-block" />
                     <InstallApp className="btn btn-ghost btn-sm btn-block" />
                     <button className="btn btn-danger btn-sm btn-block" onClick={handleLogout}>
-                      Logout
+                      {t("nav.logout")}
                     </button>
                   </div>
                 </div>
@@ -286,9 +292,10 @@ export default function Navbar() {
             </div>
           ) : (
             <>
+              <LanguageToggle className="btn btn-ghost btn-sm" />
               <ThemeToggle className="btn btn-ghost btn-sm" />
               <Link to="/login" className="btn btn-sm">
-                Login
+                {t("nav.login")}
               </Link>
             </>
           )}
@@ -337,11 +344,11 @@ export default function Navbar() {
               <input
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                placeholder="Search shops & products…"
+                placeholder={t("nav.search")}
                 aria-label="Search"
               />
               <button className="btn btn-sm" type="submit">
-                Go
+                {t("nav.go")}
               </button>
             </form>
 
@@ -364,34 +371,35 @@ export default function Navbar() {
               {user && (
                 <>
                   <Link to="/notifications" onClick={() => setDrawer(false)}>
-                    Notifications
+                    {t("nav.notifications")}
                   </Link>
                   <Link to="/settings" onClick={() => setDrawer(false)}>
-                    Settings
+                    {t("nav.settings")}
                   </Link>
                 </>
               )}
             </div>
 
             <div className="drawer-foot">
+              <LanguageToggle className="btn btn-ghost" />
               <ThemeToggle className="btn btn-ghost" />
               <DownloadApp className="btn btn-ghost" />
               <InstallApp className="btn btn-ghost" />
               {user ? (
                 <button className="btn btn-danger" onClick={handleLogout}>
-                  Logout
+                  {t("nav.logout")}
                 </button>
               ) : (
                 <>
                   <Link to="/login" className="btn" onClick={() => setDrawer(false)}>
-                    Login
+                    {t("nav.login")}
                   </Link>
                   <Link
                     to="/register"
                     className="btn btn-outline"
                     onClick={() => setDrawer(false)}
                   >
-                    Create account
+                    {t("nav.register")}
                   </Link>
                 </>
               )}

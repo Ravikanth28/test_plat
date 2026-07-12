@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useLang } from "../context/LanguageContext.jsx";
 
 export default function Login() {
   const { login } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -62,13 +64,13 @@ export default function Login() {
 
       <div className="auth-main">
         <form className="form" onSubmit={submit}>
-          <h1>Welcome back</h1>
+          <h1>{t("auth.loginTitle")}</h1>
           <p className="muted small" style={{ marginTop: 0, marginBottom: 18 }}>
             Sign in to continue ordering
           </p>
           {error && <div className="error">{error}</div>}
           <div className="field">
-            <label>Email</label>
+            <label>{t("auth.email")}</label>
             <input
               type="email"
               value={email}
@@ -77,7 +79,7 @@ export default function Login() {
             />
           </div>
           <div className="field">
-            <label>Password</label>
+            <label>{t("auth.password")}</label>
             <input
               type="password"
               value={password}
@@ -86,7 +88,7 @@ export default function Login() {
             />
           </div>
           <button className="btn btn-block" disabled={busy}>
-            {busy ? "Signing in..." : "Login"}
+            {busy ? "Signing in..." : t("auth.signIn")}
           </button>
           <p className="center small mt">
             New here? <Link to="/register" style={{ color: "var(--brand)", fontWeight: 700 }}>Create an account</Link>

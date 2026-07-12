@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
+import { useLang } from "../context/LanguageContext.jsx";
 import FavoriteButton from "../components/FavoriteButton.jsx";
 import GetAppBanner from "../components/GetAppBanner.jsx";
 import AdCarousel from "../components/AdCarousel.jsx";
@@ -80,6 +81,7 @@ function Thumb({ image, fallback, className, style, children }) {
 }
 
 export default function Home() {
+  const { t } = useLang();
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("all");
@@ -217,10 +219,8 @@ export default function Home() {
       <div className="hero">
         <div className="container hero-inner">
           <div className="hero-copy">
-            <h1>Groceries, food & essentials — delivered fast</h1>
-            <p className="sub">
-              From department stores, pharmacies, juice bars, restaurants & more near you.
-            </p>
+            <h1>{t("home.hero.title")}</h1>
+            <p className="sub">{t("home.hero.sub")}</p>
             <form className="search-bar" onSubmit={runSearch}>
               <input
                 placeholder='Search "paracetamol", "dosa", "milk", "pens"...'
@@ -228,7 +228,7 @@ export default function Home() {
                 onChange={(e) => setSearch(e.target.value)}
               />
               <button className="btn" type="submit">
-                Search
+                {t("home.search")}
               </button>
             </form>
           </div>
@@ -278,7 +278,7 @@ export default function Home() {
           </>
         )}
 
-        <h2 className="section-title">Shop by category</h2>
+        <h2 className="section-title">{t("home.shopByCategory")}</h2>
         <div className="cat-scroll">
           {CATEGORIES.map((c) => (
             <button
@@ -295,7 +295,7 @@ export default function Home() {
         <div className="shops-layout">
           {/* Filter sidebar — applies to the shops in the chosen category. */}
           <aside className="filter-panel">
-            <h3 className="filter-title">Filters</h3>
+            <h3 className="filter-title">{t("home.filters")}</h3>
 
             <div className="filter-group">
               <span className="filter-label">Showing</span>
@@ -403,7 +403,7 @@ export default function Home() {
           <div className="shops-main">
             <div className="row between" style={{ alignItems: "center" }}>
               <h2 className="section-title" style={{ marginBottom: 0 }}>
-                {category === "all" ? "All shops near you" : catLabel(category) + " shops"}
+                {category === "all" ? t("home.allShopsNear") : catLabel(category) + " shops"}
               </h2>
               {!loading && (
                 <span className="muted small">

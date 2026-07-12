@@ -622,6 +622,52 @@ button {
   justify-content: center;
 }
 
+/* Language toggle */
+.lang-toggle {
+  position: relative;
+}
+.lang-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  min-width: 180px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  padding: 6px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lang-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  transition: background 0.12s;
+}
+.lang-item:hover {
+  background: var(--surface-2);
+}
+.lang-item.active {
+  color: var(--brand);
+  font-weight: 700;
+}
+.lang-check {
+  margin-left: auto;
+  color: var(--brand);
+}
+
 /* Settings page */
 .settings-page {
   max-width: 720px;
