@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -14,11 +14,14 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawer, setDrawer] = useState(false);
+  const [menu, setMenu] = useState(false); // desktop avatar dropdown
   const [term, setTerm] = useState("");
+  const menuRef = useRef(null);
 
-  // Close the mobile drawer whenever the route changes.
+  // Close the mobile drawer and avatar menu whenever the route changes.
   useEffect(() => {
     setDrawer(false);
+    setMenu(false);
   }, [location.pathname, location.search]);
 
   // Prevent background scroll while the drawer is open.
@@ -29,9 +32,25 @@ export default function Navbar() {
     };
   }, [drawer]);
 
+  // Close the avatar dropdown on outside click / Escape.
+  useEffect(() => {
+    if (!menu) return;
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenu(false);
+    };
+    const onKey = (e) => e.key === "Escape" && setMenu(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
+
   const handleLogout = () => {
     logout();
     setDrawer(false);
+    setMenu(false);
     navigate("/");
   };
 
@@ -42,6 +61,7 @@ export default function Navbar() {
     navigate(`/search?q=${encodeURIComponent(q)}`);
   };
 
+  // Role-aware navigation links, shared by the avatar dropdown and the drawer.
   const roleLinks = (onClick) => (
     <>
       <Link to="/" onClick={onClick}>
@@ -88,10 +108,10 @@ export default function Navbar() {
           />
         </form>
 
-        {/* Desktop links */}
+        {/* Desktop right cluster — kept minimal: Cart, alerts, and a single
+            avatar menu that holds everything else (links, settings, theme,
+            app install, logout). Logged-out users just get theme + Login. */}
         <div className="nav-links nav-desktop">
-          {roleLinks()}
-
           <Link to="/cart" className="nav-cart" title="Cart">
             🛒 <span>Cart</span>
             {count > 0 && <span className="cart-badge">{count}</span>}
@@ -99,21 +119,52 @@ export default function Navbar() {
 
           {user && <NotificationBell />}
 
-          <ThemeToggle className="btn btn-ghost btn-sm" />
-          <DownloadApp className="btn btn-ghost btn-sm" />
-          <InstallApp className="btn btn-ghost btn-sm" />
-
           {user ? (
-            <>
-              <span className="muted small">Hi, {user.name.split(" ")[0]}</span>
-              <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
-                Logout
+            <div className="avatar-menu" ref={menuRef}>
+              <button
+                className="avatar-btn"
+                aria-label="Account menu"
+                aria-expanded={menu}
+                onClick={() => setMenu((m) => !m)}
+              >
+                {user.name.charAt(0).toUpperCase()}
               </button>
-            </>
+
+              {menu && (
+                <div className="avatar-panel" role="menu">
+                  <div className="avatar-panel-head">
+                    <div className="avatar-lg">{user.name.charAt(0).toUpperCase()}</div>
+                    <div className="avatar-id">
+                      <div className="nm">{user.name}</div>
+                      <div className="muted small">{user.email}</div>
+                    </div>
+                  </div>
+
+                  <div className="avatar-links">
+                    {roleLinks(() => setMenu(false))}
+                    <Link to="/settings" onClick={() => setMenu(false)}>
+                      ⚙️ Settings
+                    </Link>
+                  </div>
+
+                  <div className="avatar-panel-foot">
+                    <ThemeToggle className="btn btn-ghost btn-sm btn-block" />
+                    <DownloadApp className="btn btn-ghost btn-sm btn-block" />
+                    <InstallApp className="btn btn-ghost btn-sm btn-block" />
+                    <button className="btn btn-danger btn-sm btn-block" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
-            <Link to="/login" className="btn btn-sm">
-              Login
-            </Link>
+            <>
+              <ThemeToggle className="btn btn-ghost btn-sm" />
+              <Link to="/login" className="btn btn-sm">
+                Login
+              </Link>
+            </>
           )}
         </div>
 
@@ -169,21 +220,30 @@ export default function Navbar() {
             </form>
 
             {user && (
-              <div className="drawer-user">
+              <Link
+                to="/settings"
+                className="drawer-user"
+                onClick={() => setDrawer(false)}
+              >
                 <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
                 <div>
                   <div className="nm">{user.name}</div>
                   <div className="muted small">{user.email}</div>
                 </div>
-              </div>
+              </Link>
             )}
 
             <div className="drawer-links">
               {roleLinks(() => setDrawer(false))}
               {user && (
-                <Link to="/notifications" onClick={() => setDrawer(false)}>
-                  Notifications
-                </Link>
+                <>
+                  <Link to="/notifications" onClick={() => setDrawer(false)}>
+                    Notifications
+                  </Link>
+                  <Link to="/settings" onClick={() => setDrawer(false)}>
+                    Settings
+                  </Link>
+                </>
               )}
             </div>
 

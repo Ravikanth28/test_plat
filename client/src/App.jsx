@@ -16,6 +16,7 @@ import Register from "./pages/Register.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
 import OrderDetail from "./pages/OrderDetail.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
+import SettingsPage from "./pages/SettingsPage.jsx";
 import ShopDashboard from "./pages/ShopDashboard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 
@@ -71,6 +72,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
