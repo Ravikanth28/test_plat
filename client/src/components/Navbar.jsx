@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { api } from "../api.js";
+import { rupee, catIcon } from "../utils.js";
 import InstallApp from "./InstallApp.jsx";
 import DownloadApp from "./DownloadApp.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
@@ -16,13 +18,59 @@ export default function Navbar() {
   const [drawer, setDrawer] = useState(false);
   const [menu, setMenu] = useState(false); // desktop avatar dropdown
   const [term, setTerm] = useState("");
+  const [sug, setSug] = useState({ shops: [], products: [] });
+  const [sugOpen, setSugOpen] = useState(false);
+  const [sugLoading, setSugLoading] = useState(false);
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
 
   // Close the mobile drawer and avatar menu whenever the route changes.
   useEffect(() => {
     setDrawer(false);
     setMenu(false);
+    setSugOpen(false);
   }, [location.pathname, location.search]);
+
+  // Debounced autocomplete: fetch matching shops + products as the user types.
+  // Both endpoints are public, so we skip the auth header.
+  useEffect(() => {
+    const q = term.trim();
+    if (q.length < 2) {
+      setSug({ shops: [], products: [] });
+      setSugLoading(false);
+      return undefined;
+    }
+    setSugLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const [shops, products] = await Promise.all([
+          api.get(`/shops?q=${encodeURIComponent(q)}`, { auth: false }),
+          api.get(`/products?search=${encodeURIComponent(q)}`, { auth: false }),
+        ]);
+        setSug({
+          shops: (Array.isArray(shops) ? shops : []).slice(0, 4),
+          products: (Array.isArray(products) ? products : []).slice(0, 5),
+        });
+      } catch {
+        setSug({ shops: [], products: [] });
+      } finally {
+        setSugLoading(false);
+      }
+    }, 220);
+    return () => clearTimeout(t);
+  }, [term]);
+
+  // Close the suggestions dropdown on outside click.
+  useEffect(() => {
+    if (!sugOpen) return undefined;
+    const onClick = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSugOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [sugOpen]);
 
   // Prevent background scroll while the drawer is open.
   useEffect(() => {
@@ -58,8 +106,18 @@ export default function Navbar() {
     e.preventDefault();
     const q = term.trim();
     if (!q) return;
+    setSugOpen(false);
     navigate(`/search?q=${encodeURIComponent(q)}`);
   };
+
+  // Jump straight to a suggestion and clear the search box.
+  const goTo = (path) => {
+    setSugOpen(false);
+    setTerm("");
+    navigate(path);
+  };
+
+  const hasSug = sug.shops.length > 0 || sug.products.length > 0;
 
   // Role-aware navigation links, shared by the avatar dropdown and the drawer.
   const roleLinks = (onClick) => (
@@ -97,16 +155,83 @@ export default function Navbar() {
           Local<span>Mart</span>
         </Link>
 
-        {/* Center search (desktop) */}
-        <form className="nav-search" onSubmit={submitSearch}>
-          <span className="nav-search-ic">🔍</span>
-          <input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search shops & products…"
-            aria-label="Search"
-          />
-        </form>
+        {/* Center search (desktop) with live autocomplete */}
+        <div className="nav-search-wrap" ref={searchRef}>
+          <form className="nav-search" onSubmit={submitSearch}>
+            <span className="nav-search-ic">🔍</span>
+            <input
+              value={term}
+              onChange={(e) => {
+                setTerm(e.target.value);
+                setSugOpen(true);
+              }}
+              onFocus={() => setSugOpen(true)}
+              placeholder="Search shops & products…"
+              aria-label="Search"
+            />
+          </form>
+
+          {sugOpen && term.trim().length >= 2 && (
+            <div className="search-suggest">
+              {sugLoading && !hasSug && (
+                <div className="ss-empty muted small">Searching…</div>
+              )}
+              {!sugLoading && !hasSug && (
+                <div className="ss-empty muted small">No matches for “{term.trim()}”</div>
+              )}
+
+              {sug.shops.length > 0 && (
+                <div className="ss-group">
+                  <div className="ss-head">Shops</div>
+                  {sug.shops.map((s) => (
+                    <button
+                      key={s._id}
+                      type="button"
+                      className="ss-item"
+                      onClick={() => goTo(`/shop/${s._id}`)}
+                    >
+                      <span className="ss-ic">{catIcon(s.category)}</span>
+                      <span className="ss-txt">
+                        <span className="ss-name">{s.name}</span>
+                        <span className="muted small">{s.category}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {sug.products.length > 0 && (
+                <div className="ss-group">
+                  <div className="ss-head">Products</div>
+                  {sug.products.map((p) => (
+                    <button
+                      key={p._id}
+                      type="button"
+                      className="ss-item"
+                      onClick={() => goTo(`/shop/${p.shop}`)}
+                    >
+                      <span className="ss-ic">🛍️</span>
+                      <span className="ss-txt">
+                        <span className="ss-name">{p.name}</span>
+                        <span className="muted small">{rupee(p.price)}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {hasSug && (
+                <button
+                  type="button"
+                  className="ss-all"
+                  onClick={() => goTo(`/search?q=${encodeURIComponent(term.trim())}`)}
+                >
+                  See all results for “{term.trim()}” →
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Desktop right cluster — kept minimal: Cart, alerts, and a single
             avatar menu that holds everything else (links, settings, theme,

@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
+import { useCart } from "../context/CartContext.jsx";
 import { rupee, statusLabel, statusBadgeClass, catIcon } from "../utils.js";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { reorder } = useCart();
+  const navigate = useNavigate();
+
+  // Re-add a past order's items to the cart and jump to it. Prevent the
+  // parent card <Link> from also navigating to the order detail page.
+  const orderAgain = (e, o) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!o.shop?._id) return;
+    reorder(o.items, o.shop);
+    navigate("/cart");
+  };
 
   useEffect(() => {
     api
@@ -102,6 +115,14 @@ export default function MyOrders() {
                   View details →
                 </span>
               </div>
+
+              <button
+                type="button"
+                className="btn btn-sm btn-outline btn-block oc-reorder"
+                onClick={(e) => orderAgain(e, o)}
+              >
+                🔁 Order again
+              </button>
             </Link>
           ))}
         </div>

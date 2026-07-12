@@ -76,6 +76,22 @@ export function CartProvider({ children }) {
     setShopName("");
   };
 
+  // Replace the whole cart with the line items of a past order ("Order again").
+  // Checkout rebuilds prices from the DB, so stale prices self-correct there.
+  const reorder = (orderItems = [], shop = {}) => {
+    const lines = orderItems.map((i) => ({
+      product: i.product,
+      name: i.name,
+      price: i.price,
+      unit: i.unit,
+      qty: i.qty || 1,
+    }));
+    setItems(lines);
+    setShopId(shop._id || shop.id || null);
+    setShopName(shop.name || "");
+    return lines.length;
+  };
+
   const itemsTotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
 
@@ -89,6 +105,7 @@ export function CartProvider({ children }) {
         decItem,
         removeItem,
         clearCart,
+        reorder,
         itemsTotal,
         count,
       }}

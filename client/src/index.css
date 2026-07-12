@@ -141,9 +141,15 @@ button {
 }
 
 /* Center search bar (desktop) */
-.nav-search {
+.nav-search-wrap {
+  position: relative;
   flex: 1;
   max-width: 460px;
+  display: flex;
+}
+.nav-search {
+  flex: 1;
+  max-width: none;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -171,6 +177,99 @@ button {
 }
 .nav-search input::placeholder {
   color: var(--muted);
+}
+
+/* Search autocomplete dropdown */
+.search-suggest {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(16, 17, 21, 0.22);
+  padding: 6px;
+  z-index: 1200;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.ss-empty {
+  padding: 12px 12px;
+}
+.ss-group {
+  padding: 4px 0;
+}
+.ss-group + .ss-group {
+  border-top: 1px solid var(--border);
+}
+.ss-head {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 6px 10px 4px;
+}
+.ss-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+}
+.ss-item:hover {
+  background: var(--bg);
+}
+.ss-ic {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--brand-soft);
+  font-size: 16px;
+}
+.ss-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ss-name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-all {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--brand);
+  border-top: 1px solid var(--border);
+}
+.ss-all:hover {
+  background: var(--brand-soft);
+}
+
+/* "Order again" button on order-history cards */
+.oc-reorder {
+  margin-top: 12px;
 }
 
 .nav-links {
