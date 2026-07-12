@@ -9,6 +9,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
   const emptyBanner = { title: "", subtitle: "", image: "", link: "/", cta: "Shop now", order: 0 };
   const [newBanner, setNewBanner] = useState(emptyBanner);
@@ -32,6 +33,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     load().catch(() => setLoading(false));
   }, []);
+
+  // Lazy-load the platform revenue report only when the tab is opened.
+  useEffect(() => {
+    if (tab !== "reports" || reports) return;
+    api.get("/admin/analytics").then(setReports).catch(() => {});
+  }, [tab, reports]);
 
   const approveShop = async (shop, isApproved) => {
     const updated = await api.put(`/admin/shops/${shop._id}/approve`, { isApproved });
@@ -101,7 +108,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="tabs">
-        {["overview", "shops", "users", "orders", "banners"].map((t) => (
+        {["overview", "reports", "shops", "users", "orders", "banners"].map((t) => (
           <button
             key={t}
             className={`tab ${tab === t ? "active" : ""}`}
@@ -123,6 +130,8 @@ export default function AdminDashboard() {
           <StatCard num={rupee(stats.revenue)} lbl="Paid Revenue" icon="💰" cls="sc-green" />
         </div>
       )}
+
+      {tab === "reports" && <AdminReports data={reports} />}
 
       {tab === "shops" && (
         <div className="card">
@@ -391,6 +400,113 @@ export default function AdminDashboard() {
         </>
       )}
     </div>
+  );
+}
+
+function AdminReports({ data }) {
+  if (!data) return <div className="loading">Loading revenue report...</div>;
+
+  const { totals, byDay = [], shopRanking = [] } = data;
+  const maxDay = Math.max(1, ...byDay.map((d) => d.revenue));
+
+  return (
+    <>
+      <div className="kpi-grid mb">
+        <div className="kpi">
+          <div className="kpi-label">Earned Revenue</div>
+          <div className="kpi-value">{rupee(totals.revenue)}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Delivered Orders</div>
+          <div className="kpi-value">{totals.deliveredOrders}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Avg Order</div>
+          <div className="kpi-value">{rupee(totals.avgOrder)}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Items Sold</div>
+          <div className="kpi-value">{totals.items}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Active Shops</div>
+          <div className="kpi-value">{totals.activeShops}</div>
+        </div>
+      </div>
+
+      <div className="card mb">
+        <h3 style={{ marginTop: 0 }}>Revenue — last 14 days</h3>
+        <p className="muted small" style={{ marginTop: -6 }}>
+          Earned revenue from delivered orders across the platform.
+        </p>
+        {byDay.every((d) => d.revenue === 0) ? (
+          <div className="empty">
+            <div className="big">📉</div>
+            <p className="muted">No delivered-order revenue in this window yet.</p>
+          </div>
+        ) : (
+          <div className="bar-chart">
+            {byDay.map((d) => (
+              <div className="bar-col" key={d.date} title={`${d.date}: ${rupee(d.revenue)}`}>
+                <div className="bar-track">
+                  <div
+                    className="bar-fill"
+                    style={{ height: `${(d.revenue / maxDay) * 100}%` }}
+                  />
+                </div>
+                <div className="bar-x">{d.date.slice(5)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Shop performance ranking</h3>
+        <p className="muted small" style={{ marginTop: -6 }}>
+          Shops ranked by earned revenue (delivered orders only).
+        </p>
+        {shopRanking.length === 0 ? (
+          <div className="empty">
+            <div className="big">🏪</div>
+            <p className="muted">No shop revenue to rank yet.</p>
+          </div>
+        ) : (
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Shop</th>
+                  <th>Category</th>
+                  <th>Revenue</th>
+                  <th>Orders</th>
+                  <th>Items</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shopRanking.map((s) => (
+                  <tr key={s.shopId}>
+                    <td>
+                      <span className={`rank-badge${s.rank <= 3 ? " top" : ""}`}>#{s.rank}</span>
+                    </td>
+                    <td>{s.name}</td>
+                    <td>
+                      {s.category ? <span className="badge badge-cat">{s.category}</span> : "—"}
+                    </td>
+                    <td>
+                      <strong>{rupee(s.revenue)}</strong>
+                    </td>
+                    <td>{s.orders}</td>
+                    <td>{s.items}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

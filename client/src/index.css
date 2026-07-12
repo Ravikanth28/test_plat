@@ -2135,6 +2135,23 @@ th {
 .top-prod:last-child {
   border-bottom: none;
 }
+.rank-badge {
+  display: inline-block;
+  min-width: 30px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.rank-badge.top {
+  background: var(--brand-soft);
+  border-color: transparent;
+  color: var(--brand);
+}
 @media (max-width: 720px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);

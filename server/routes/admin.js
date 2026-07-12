@@ -39,6 +39,80 @@ router.get("/stats", async (req, res, next) => {
   }
 });
 
+// GET /api/admin/analytics  -> platform revenue report + shop performance
+// Revenue counts delivered orders (money actually earned). Includes a 14-day
+// revenue trend and a per-shop leaderboard ranked by earned revenue.
+router.get("/analytics", async (req, res, next) => {
+  try {
+    const DAYS = 14;
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    since.setDate(since.getDate() - (DAYS - 1));
+
+    // Seed a continuous day axis (zero-filled) for the trend chart.
+    const dayMap = new Map();
+    for (let i = 0; i < DAYS; i++) {
+      const d = new Date(since);
+      d.setDate(since.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      dayMap.set(key, { date: key, revenue: 0, orders: 0 });
+    }
+
+    // Only delivered orders count toward earned revenue.
+    const delivered = await Order.find({ status: "delivered" })
+      .populate("shop", "name category")
+      .select("total createdAt shop items");
+
+    let totalRevenue = 0;
+    let totalItems = 0;
+    const shopMap = new Map(); // shopId -> { name, category, revenue, orders, items }
+
+    for (const o of delivered) {
+      totalRevenue += o.total;
+      const key = new Date(o.createdAt).toISOString().slice(0, 10);
+      if (dayMap.has(key)) {
+        const row = dayMap.get(key);
+        row.revenue += o.total;
+        row.orders += 1;
+      }
+      const sid = o.shop?._id?.toString() || "unknown";
+      const s = shopMap.get(sid) || {
+        shopId: sid,
+        name: o.shop?.name || "Unknown shop",
+        category: o.shop?.category || "",
+        revenue: 0,
+        orders: 0,
+        items: 0,
+      };
+      s.revenue += o.total;
+      s.orders += 1;
+      for (const it of o.items || []) {
+        s.items += it.qty || 0;
+        totalItems += it.qty || 0;
+      }
+      shopMap.set(sid, s);
+    }
+
+    const shopRanking = [...shopMap.values()]
+      .sort((a, b) => b.revenue - a.revenue)
+      .map((s, i) => ({ ...s, rank: i + 1 }));
+
+    res.json({
+      totals: {
+        revenue: totalRevenue,
+        deliveredOrders: delivered.length,
+        items: totalItems,
+        avgOrder: delivered.length ? Math.round(totalRevenue / delivered.length) : 0,
+        activeShops: shopRanking.length,
+      },
+      byDay: [...dayMap.values()],
+      shopRanking,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/admin/users
 router.get("/users", async (req, res, next) => {
   try {
