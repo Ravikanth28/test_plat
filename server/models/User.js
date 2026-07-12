@@ -17,6 +17,22 @@ const userSchema = new mongoose.Schema(
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", default: null },
     // Customer's saved/favourite shops
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Shop" }],
+    // Cross-device notification preferences. These gate Web Push (server-side)
+    // and the in-app toast (client mirrors them). Per-device sound settings live
+    // in the browser (localStorage), not here.
+    notifPrefs: {
+      // Master switch: when true, no push/toast for anything.
+      muteAll: { type: Boolean, default: false },
+      // Notification `type` values the user has switched off.
+      mutedTypes: { type: [String], default: [] },
+      // "Do not disturb" window. start/end are minutes-from-midnight local time
+      // (e.g. 22:00 = 1320). When start > end the window wraps past midnight.
+      quietHours: {
+        enabled: { type: Boolean, default: false },
+        start: { type: Number, default: 1320 }, // 22:00
+        end: { type: Number, default: 420 }, //  07:00
+      },
+    },
   },
   { timestamps: true }
 );

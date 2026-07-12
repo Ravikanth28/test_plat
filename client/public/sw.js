@@ -1,6 +1,6 @@
 // LocalMart service worker — enables installability (PWA) and basic offline.
 // Strategy: network-first for navigation & API, cache-first for static assets.
-const CACHE = "localmart-v3";
+const CACHE = "localmart-v4";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -54,6 +54,28 @@ self.addEventListener("fetch", (event) => {
 // --- Web Push -------------------------------------------------------------
 // Background notifications: shown even when the app/tab is closed. The server
 // sends a JSON payload { title, body, link, type }.
+
+// Per-type quick actions shown as buttons on the OS notification.
+function actionsFor(type) {
+  if (type && type.startsWith("order")) {
+    return [{ action: "view", title: "View order" }];
+  }
+  if (type === "shop_new") {
+    return [{ action: "view", title: "Review" }];
+  }
+  return [];
+}
+
+// Is any app window currently focused/visible? If so we skip the OS
+// notification and let the in-app toast (SSE) handle it — no duplicate alert.
+async function anyClientVisible() {
+  const clients = await self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true,
+  });
+  return clients.some((c) => c.visibilityState === "visible" || c.focused);
+}
+
 self.addEventListener("push", (event) => {
   let data = {};
   try {
@@ -62,18 +84,27 @@ self.addEventListener("push", (event) => {
     data = { title: "LocalMart", body: event.data ? event.data.text() : "" };
   }
   const title = data.title || "LocalMart";
+  const type = data.type || "generic";
   const options = {
     body: data.body || "",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
-    data: { link: data.link || "/", type: data.type || "generic" },
-    tag: data.type || undefined, // collapse same-type notifications
+    data: { link: data.link || "/", type },
+    tag: type, // collapse same-type notifications into one
     renotify: true,
+    actions: actionsFor(type),
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    anyClientVisible().then((visible) => {
+      // Foreground tab open: suppress the OS toast to avoid a double alert.
+      if (visible) return;
+      return self.registration.showNotification(title, options);
+    })
+  );
 });
 
 // Focus an existing tab (or open a new one) at the notification's link.
+// Both a body-tap and the "view" action button deep-link to the same place.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const link = (event.notification.data && event.notification.data.link) || "/";

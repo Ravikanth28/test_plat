@@ -178,7 +178,14 @@ export default function Navbar() {
               </div>
             )}
 
-            <div className="drawer-links">{roleLinks(() => setDrawer(false))}</div>
+            <div className="drawer-links">
+              {roleLinks(() => setDrawer(false))}
+              {user && (
+                <Link to="/notifications" onClick={() => setDrawer(false)}>
+                  Notifications
+                </Link>
+              )}
+            </div>
 
             <div className="drawer-foot">
               <ThemeToggle className="btn btn-ghost" />

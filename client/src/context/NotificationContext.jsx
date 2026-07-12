@@ -12,12 +12,33 @@ import { useAuth } from "./AuthContext.jsx";
 const NotificationContext = createContext();
 export const useNotifications = () => useContext(NotificationContext);
 
-const POLL_MS = 20 * 1000;
-const SOUND_KEY = "lm_notif_sound"; // "off" disables the in-app chime
+// SSE is the primary real-time channel; polling stays on as a slow backstop
+// that reconciles counts and catches anything missed while disconnected.
+const POLL_MS = 60 * 1000;
+const TOKEN_KEY = "lm_token"; // JWT in localStorage (matches api.js)
 
-// Play a short two-note chime via the Web Audio API (no asset, works offline).
-// Browsers block audio until the user has interacted with the page, so the
-// shared context is unlocked on the first gesture (see the provider effect).
+// Per-device sound settings (localStorage). Cross-device prefs (mute/quiet
+// hours/per-type) live on the server in User.notifPrefs and are fetched below.
+const SOUND_KEY = "lm_notif_sound"; // "off" disables the in-app chime
+const TONE_KEY = "lm_notif_tone"; // which tone preset to play
+const VOL_KEY = "lm_notif_volume"; // "0".."1"
+
+// Tone presets: each is a list of { f: frequency Hz, t: start offset seconds }.
+export const TONES = {
+  chime: { label: "Chime", notes: [{ f: 880, t: 0 }, { f: 1174.7, t: 0.12 }] },
+  ding: { label: "Ding", notes: [{ f: 1046.5, t: 0 }] },
+  triad: {
+    label: "Triad",
+    notes: [{ f: 659.3, t: 0 }, { f: 830.6, t: 0.08 }, { f: 987.8, t: 0.16 }],
+  },
+  low: { label: "Soft", notes: [{ f: 523.3, t: 0 }, { f: 659.3, t: 0.12 }] },
+};
+const DEFAULT_TONE = "chime";
+const DEFAULT_VOLUME = 0.6;
+
+// Play a tone preset via the Web Audio API (no asset, works offline). Browsers
+// block audio until the user has interacted with the page, so the shared
+// context is unlocked on the first gesture (see the provider effect).
 let audioCtx = null;
 function getAudioCtx() {
   if (typeof window === "undefined") return null;
@@ -26,24 +47,22 @@ function getAudioCtx() {
   if (!audioCtx) audioCtx = new Ctx();
   return audioCtx;
 }
-function playChime() {
+function playSound(toneKey = DEFAULT_TONE, volume = DEFAULT_VOLUME) {
   try {
     const ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    const preset = TONES[toneKey] || TONES[DEFAULT_TONE];
+    const peak = Math.max(0.0001, Math.min(1, volume)) * 0.4;
     const now = ctx.currentTime;
-    const notes = [
-      { f: 880, t: 0 }, // A5
-      { f: 1174.7, t: 0.12 }, // D6
-    ];
-    for (const { f, t } of notes) {
+    for (const { f, t } of preset.notes) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = f;
       const start = now + t;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(peak, start + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
       osc.connect(gain).connect(ctx.destination);
       osc.start(start);
@@ -64,20 +83,86 @@ function urlBase64ToUint8Array(base64String) {
   return output;
 }
 
+// Client mirror of the server's interrupt gate: should this type surface a
+// toast + chime right now, given the user's saved preferences?
+function allowInterrupt(prefs, type) {
+  if (!prefs) return true;
+  if (prefs.muteAll) return false;
+  if (Array.isArray(prefs.mutedTypes) && prefs.mutedTypes.includes(type)) return false;
+  const q = prefs.quietHours;
+  if (q?.enabled) {
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const { start, end } = q;
+    const inQuiet = start > end ? mins >= start || mins < end : mins >= start && mins < end;
+    if (inQuiet) return false;
+  }
+  return true;
+}
+
 export function NotificationProvider({ children }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [toast, setToast] = useState(null); // latest new notification, shown briefly
+
+  // Sound settings (per-device).
   const [soundOn, setSoundOn] = useState(
     () => typeof localStorage === "undefined" || localStorage.getItem(SOUND_KEY) !== "off"
   );
+  const [tone, setToneState] = useState(
+    () => (typeof localStorage !== "undefined" && localStorage.getItem(TONE_KEY)) || DEFAULT_TONE
+  );
+  const [volume, setVolumeState] = useState(() => {
+    if (typeof localStorage === "undefined") return DEFAULT_VOLUME;
+    const v = Number(localStorage.getItem(VOL_KEY));
+    return Number.isFinite(v) && v >= 0 && v <= 1 ? v : DEFAULT_VOLUME;
+  });
+
+  // Server-synced preferences (mute / per-type / quiet hours).
+  const [prefs, setPrefs] = useState(null);
+
   const lastSeenId = useRef(null); // newest id we've already surfaced
   const toastTimer = useRef(null);
-  const soundOnRef = useRef(soundOn); // read latest value inside the poll closure
-  soundOnRef.current = soundOn;
+  const esRef = useRef(null); // active EventSource
 
-  // Fetch the notification list; surface a foreground toast for anything new.
+  // Latest values read inside long-lived closures (SSE / poll).
+  const soundOnRef = useRef(soundOn);
+  soundOnRef.current = soundOn;
+  const toneRef = useRef(tone);
+  toneRef.current = tone;
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
+
+  // Surface a single incoming notification (from SSE or poll): dedupe into the
+  // list, bump unread, and toast + chime if the user's prefs allow it.
+  const surface = useCallback((n) => {
+    if (!n || !n._id) return;
+    setItems((prev) => {
+      if (prev.some((x) => x._id === n._id)) return prev;
+      return [n, ...prev];
+    });
+    if (!n.read) setUnread((u) => u + 1);
+
+    if (lastSeenId.current === null) {
+      lastSeenId.current = n._id;
+      return;
+    }
+    if (n._id === lastSeenId.current) return;
+    lastSeenId.current = n._id;
+
+    if (!n.read && allowInterrupt(prefsRef.current, n.type)) {
+      setToast(n);
+      if (soundOnRef.current) playSound(toneRef.current, volumeRef.current);
+      clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToast(null), 6000);
+    }
+  }, []);
+
+  // Fetch the notification list (also used as the SSE backstop).
   const refresh = useCallback(async () => {
     if (!user) return;
     try {
@@ -85,48 +170,106 @@ export function NotificationProvider({ children }) {
       const list = data.items || [];
       setItems(list);
       setUnread(data.unread || 0);
-
+      setHasMore(!!data.hasMore);
       const newest = list[0];
-      if (newest) {
-        // On the very first load just remember the newest id (no toast spam).
-        if (lastSeenId.current === null) {
-          lastSeenId.current = newest._id;
-        } else if (newest._id !== lastSeenId.current && !newest.read) {
-          lastSeenId.current = newest._id;
-          setToast(newest);
-          if (soundOnRef.current) playChime();
-          clearTimeout(toastTimer.current);
-          toastTimer.current = setTimeout(() => setToast(null), 6000);
-        }
-      }
+      if (newest && lastSeenId.current === null) lastSeenId.current = newest._id;
     } catch {
       /* ignore transient poll errors */
     }
   }, [user]);
 
-  // Poll while logged in; reset when logged out.
+  // Load an older page for the history view's infinite scroll.
+  const loadMore = useCallback(async () => {
+    if (!user || items.length === 0) return;
+    const oldest = items[items.length - 1];
+    try {
+      const data = await api.get(
+        `/notifications?limit=30&before=${encodeURIComponent(oldest.createdAt)}`
+      );
+      const more = data.items || [];
+      setItems((prev) => {
+        const seen = new Set(prev.map((x) => x._id));
+        return [...prev, ...more.filter((x) => !seen.has(x._id))];
+      });
+      setHasMore(!!data.hasMore);
+    } catch {
+      /* ignore */
+    }
+  }, [user, items]);
+
+  // Open a Server-Sent Events stream for real-time delivery; keep a slow poll
+  // as a backstop. Reset everything on logout.
   useEffect(() => {
     if (!user) {
       setItems([]);
       setUnread(0);
+      setHasMore(false);
+      setPrefs(null);
       lastSeenId.current = null;
+      if (esRef.current) {
+        esRef.current.close();
+        esRef.current = null;
+      }
       return;
     }
+
     refresh();
+
+    // SSE (EventSource can't send headers, so the JWT rides in the query).
+    let es = null;
+    try {
+      const token = localStorage.getItem(TOKEN_KEY) || "";
+      es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
+      es.addEventListener("notification", (e) => {
+        try {
+          surface(JSON.parse(e.data));
+        } catch {
+          /* ignore malformed frame */
+        }
+      });
+      esRef.current = es;
+    } catch {
+      /* EventSource unsupported — poll still covers us */
+    }
+
     const id = setInterval(refresh, POLL_MS);
-    // Also refresh when the tab regains focus for snappier updates.
     const onFocus = () => refresh();
     window.addEventListener("focus", onFocus);
     return () => {
       clearInterval(id);
       window.removeEventListener("focus", onFocus);
+      if (es) es.close();
+      esRef.current = null;
     };
-  }, [user, refresh]);
+  }, [user, refresh, surface]);
+
+  // Fetch server-synced preferences on login.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    api
+      .get("/notifications/prefs")
+      .then((d) => !cancelled && setPrefs(d.prefs || {}))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Reflect the unread count in the tab title and the PWA app-icon badge.
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const base = document.title.replace(/^\(\d+\)\s*/, "");
+      document.title = unread > 0 ? `(${unread}) ${base}` : base;
+    }
+    if (typeof navigator !== "undefined" && "setAppBadge" in navigator) {
+      if (unread > 0) navigator.setAppBadge(unread).catch(() => {});
+      else navigator.clearAppBadge?.().catch(() => {});
+    }
+  }, [unread]);
 
   const markRead = useCallback(async (id) => {
-    setItems((prev) =>
-      prev.map((n) => (n._id === id ? { ...n, read: true } : n))
-    );
+    setItems((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)));
     setUnread((u) => Math.max(0, u - 1));
     try {
       await api.put(`/notifications/${id}/read`);
@@ -150,7 +293,7 @@ export function NotificationProvider({ children }) {
     setToast(null);
   }, []);
 
-  // Toggle the in-app chime; persist the choice and play a sample when turning on.
+  // --- Sound controls (per-device) -----------------------------------------
   const toggleSound = useCallback(() => {
     setSoundOn((on) => {
       const next = !on;
@@ -159,13 +302,48 @@ export function NotificationProvider({ children }) {
       } catch {
         /* ignore */
       }
-      if (next) playChime();
+      if (next) playSound(toneRef.current, volumeRef.current);
       return next;
     });
   }, []);
 
-  // Unlock/resume the AudioContext on the first user gesture so the chime can
-  // play later (browsers suspend audio until the user interacts with the page).
+  const setTone = useCallback((key) => {
+    if (!TONES[key]) return;
+    setToneState(key);
+    try {
+      localStorage.setItem(TONE_KEY, key);
+    } catch {
+      /* ignore */
+    }
+    playSound(key, volumeRef.current); // preview
+  }, []);
+
+  const setVolume = useCallback((v) => {
+    const vol = Math.max(0, Math.min(1, Number(v)));
+    setVolumeState(vol);
+    try {
+      localStorage.setItem(VOL_KEY, String(vol));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const previewSound = useCallback(() => {
+    playSound(toneRef.current, volumeRef.current);
+  }, []);
+
+  // --- Server-synced preferences --------------------------------------------
+  const updatePrefs = useCallback(async (patch) => {
+    setPrefs((prev) => ({ ...(prev || {}), ...patch })); // optimistic
+    try {
+      const d = await api.put("/notifications/prefs", patch);
+      setPrefs(d.prefs || {});
+    } catch {
+      /* best effort — keep optimistic value */
+    }
+  }, []);
+
+  // Unlock/resume the AudioContext on the first user gesture.
   useEffect(() => {
     const unlock = () => {
       const ctx = getAudioCtx();
@@ -209,8 +387,7 @@ export function NotificationProvider({ children }) {
     }
   }, []);
 
-  // Auto-subscribe to push once logged in if permission was already granted
-  // (silent — never prompts on its own).
+  // Auto-subscribe to push once logged in if permission was already granted.
   useEffect(() => {
     if (!user) return;
     if (typeof Notification === "undefined") return;
@@ -222,10 +399,19 @@ export function NotificationProvider({ children }) {
       value={{
         items,
         unread,
+        hasMore,
         toast,
         soundOn,
         toggleSound,
+        tone,
+        setTone,
+        volume,
+        setVolume,
+        previewSound,
+        prefs,
+        updatePrefs,
         refresh,
+        loadMore,
         markRead,
         markAllRead,
         dismissToast,

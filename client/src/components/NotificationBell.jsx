@@ -116,6 +116,16 @@ export default function NotificationBell() {
               ))
             )}
           </div>
+
+          <button
+            className="notif-foot"
+            onClick={() => {
+              setOpen(false);
+              navigate("/notifications");
+            }}
+          >
+            See all & settings
+          </button>
         </div>
       )}
     </div>
