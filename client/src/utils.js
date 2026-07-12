@@ -42,6 +42,44 @@ export const deliveryTime = (id = "") => {
   return 12 + (h % 24); // 12–35 mins
 };
 
+// Great-circle distance (km) between two {lat,lng} points using the Haversine
+// formula. Returns null if either point is missing coordinates.
+export const distanceKm = (a, b) => {
+  if (
+    !a || !b ||
+    !Number.isFinite(Number(a.lat)) || !Number.isFinite(Number(a.lng)) ||
+    !Number.isFinite(Number(b.lat)) || !Number.isFinite(Number(b.lng))
+  ) {
+    return null;
+  }
+  const R = 6371; // Earth radius in km
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(Number(b.lat) - Number(a.lat));
+  const dLng = toRad(Number(b.lng) - Number(a.lng));
+  const lat1 = toRad(Number(a.lat));
+  const lat2 = toRad(Number(b.lat));
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
+// Human-friendly distance label, e.g. "450 m" or "3.2 km".
+export const formatDistance = (km) => {
+  if (km == null || !Number.isFinite(km)) return "";
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1)} km`;
+};
+
+// Rough delivery ETA (minutes) from a distance in km: assumes a ~20 km/h
+// average for local two-wheeler delivery plus a fixed prep/handoff buffer.
+export const etaMinutes = (km) => {
+  if (km == null || !Number.isFinite(km)) return null;
+  const AVG_KMH = 20;
+  const PREP_BUFFER = 8;
+  return Math.max(5, Math.round((km / AVG_KMH) * 60) + PREP_BUFFER);
+};
+
 export const STATUS_STEPS = [
   { key: "placed", label: "Order Placed" },
   { key: "accepted", label: "Accepted" },

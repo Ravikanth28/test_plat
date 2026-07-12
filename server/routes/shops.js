@@ -9,6 +9,30 @@ import { notifyAdmins } from "../utils/notify.js";
 
 const router = express.Router();
 
+// Escape user input before using it in a $regex so metacharacters can't change
+// the query semantics or cause catastrophic backtracking (ReDoS). Cap length too.
+const safeRegex = (input) => {
+  const s = String(input).slice(0, 80);
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+// Fields a shopkeeper may set when creating/updating a shop. Everything else
+// (isApproved, rating, numReviews, owner) stays server-controlled.
+const SHOP_WRITABLE = ["name", "category", "description", "address", "phone", "image", "isOpen"];
+
+// Keep only whitelisted keys; normalise geo into {lat,lng} of finite numbers.
+const pickShopFields = (body = {}) => {
+  const out = {};
+  for (const k of SHOP_WRITABLE) {
+    if (body[k] !== undefined) out[k] = body[k];
+  }
+  const g = body.geo;
+  if (g && Number.isFinite(Number(g.lat)) && Number.isFinite(Number(g.lng))) {
+    out.geo = { lat: Number(g.lat), lng: Number(g.lng) };
+  }
+  return out;
+};
+
 // GET /api/shops  -> public list (approved & open by default)
 router.get("/", async (req, res, next) => {
   try {
@@ -16,7 +40,7 @@ router.get("/", async (req, res, next) => {
     const filter = {};
     if (!all) filter.isApproved = true;
     if (category && category !== "all") filter.category = category;
-    if (q) filter.name = { $regex: q, $options: "i" };
+    if (q) filter.name = { $regex: safeRegex(q), $options: "i" };
     const shops = await Shop.find(filter).sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
@@ -57,7 +81,7 @@ router.post("/", protect, authorize("shopkeeper", "admin"), async (req, res, nex
       res.status(400);
       throw new Error("You already have a shop");
     }
-    const shop = await Shop.create({ ...req.body, owner: req.user._id });
+    const shop = await Shop.create({ ...pickShopFields(req.body), owner: req.user._id });
     await User.findByIdAndUpdate(req.user._id, { shop: shop._id });
 
     // Notify all admins that a new shop needs approval.
@@ -86,9 +110,11 @@ router.put("/:id", protect, authorize("shopkeeper", "admin"), async (req, res, n
       res.status(403);
       throw new Error("Not your shop");
     }
-    // Only admin may change approval status
-    const updates = { ...req.body };
-    if (req.user.role !== "admin") delete updates.isApproved;
+    // Whitelist the writable fields. Only admin may change approval status.
+    const updates = pickShopFields(req.body);
+    if (req.user.role === "admin" && req.body.isApproved !== undefined) {
+      updates.isApproved = !!req.body.isApproved;
+    }
     Object.assign(shop, updates);
     await shop.save();
     res.json(shop);

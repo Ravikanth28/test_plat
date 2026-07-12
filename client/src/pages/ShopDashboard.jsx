@@ -175,14 +175,38 @@ function CreateShop({ onCreated }) {
     address: "",
     phone: "",
   });
+  const [geo, setGeo] = useState(null);
+  const [geoBusy, setGeoBusy] = useState(false);
   const [error, setError] = useState("");
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  // Capture the shop's location so it can be sorted by distance for nearby
+  // customers on the home page. Optional — the shop still works without it.
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Location isn't supported on this device.");
+      return;
+    }
+    setGeoBusy(true);
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoBusy(false);
+      },
+      () => {
+        setError("Couldn't get your location. Please allow access and retry.");
+        setGeoBusy(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     setError("");
     try {
-      const shop = await api.post("/shops", form);
+      const shop = await api.post("/shops", geo ? { ...form, geo } : form);
       onCreated(shop);
     } catch (err) {
       setError(err.message);
@@ -219,6 +243,24 @@ function CreateShop({ onCreated }) {
         <div className="field">
           <label>Phone</label>
           <input value={form.phone} onChange={set("phone")} />
+        </div>
+        <div className="field">
+          <label>Shop location (optional)</label>
+          <button
+            type="button"
+            className="btn btn-ghost btn-block"
+            onClick={useMyLocation}
+            disabled={geoBusy}
+          >
+            {geoBusy
+              ? "Locating…"
+              : geo
+              ? `📍 Location set (${geo.lat.toFixed(4)}, ${geo.lng.toFixed(4)})`
+              : "📍 Use my current location"}
+          </button>
+          <p className="muted small" style={{ margin: "6px 0 0" }}>
+            Helps nearby customers find your shop with distance sorting.
+          </p>
         </div>
         <button className="btn btn-block">Create Shop</button>
       </form>

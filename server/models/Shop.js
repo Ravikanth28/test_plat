@@ -15,6 +15,12 @@ const shopSchema = new mongoose.Schema(
     phone: { type: String, default: "" },
     image: { type: String, default: "" },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    // Optional shop location so customers can sort by "nearest" and we can show
+    // a delivery ETA. Set by the shopkeeper from their dashboard.
+    geo: {
+      lat: Number,
+      lng: Number,
+    },
     isOpen: { type: Boolean, default: true },
     // Admin approval so admin can "control all"
     isApproved: { type: Boolean, default: false },

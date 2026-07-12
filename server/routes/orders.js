@@ -25,10 +25,33 @@ const STATUS_COPY = {
   cancelled: { title: "Order cancelled", body: "Your order was cancelled." },
 };
 
+// Allowed forward transitions. A shop may cancel from any pre-delivery state.
+// This stops out-of-order jumps (e.g. placed -> delivered) or reopening a
+// finished order.
+const NEXT_ALLOWED = {
+  placed: ["accepted", "cancelled"],
+  accepted: ["preparing", "cancelled"],
+  preparing: ["out_for_delivery", "cancelled"],
+  out_for_delivery: ["delivered", "cancelled"],
+  delivered: [],
+  cancelled: [],
+};
+
 // POST /api/orders  -> customer places an order
 router.post("/", protect, async (req, res, next) => {
   try {
-    const { items, shopId, deliveryAddress, phone, paymentMethod, geo } = req.body;
+    const { items, shopId, deliveryAddress, phone, paymentMethod, geo, idempotencyKey } = req.body;
+
+    // Idempotency: if the client retries the same checkout (double-tap, flaky
+    // network), return the already-created order instead of duplicating it.
+    if (idempotencyKey) {
+      const dup = await Order.findOne({
+        customer: req.user._id,
+        idempotencyKey: String(idempotencyKey),
+      });
+      if (dup) return res.status(200).json({ order: dup, payment: null });
+    }
+
     if (!items || !items.length) {
       res.status(400);
       throw new Error("Cart is empty");
@@ -89,21 +112,29 @@ router.post("/", protect, async (req, res, next) => {
       phone: phone || req.user.phone,
       paymentMethod: method,
       paymentStatus: "pending",
+      idempotencyKey: idempotencyKey ? String(idempotencyKey) : undefined,
     });
 
     // For online payment, create a payment order (live or demo)
     let payment = null;
     if (method === "online") {
-      const pay = await createPaymentOrder(total, order.orderNo);
-      order.razorpay.orderId = pay.id;
-      await order.save();
-      payment = {
-        mode: pay.mode,
-        razorpayOrderId: pay.id,
-        amount: pay.amount,
-        currency: pay.currency,
-        key: getPublicKey(),
-      };
+      try {
+        const pay = await createPaymentOrder(total, order.orderNo);
+        order.razorpay.orderId = pay.id;
+        await order.save();
+        payment = {
+          mode: pay.mode,
+          razorpayOrderId: pay.id,
+          amount: pay.amount,
+          currency: pay.currency,
+          key: getPublicKey(),
+        };
+      } catch (payErr) {
+        // Don't leave an orphaned pending order if the gateway call fails.
+        await order.deleteOne();
+        res.status(502);
+        throw new Error("Could not start payment. Please try again.");
+      }
     }
 
     // Notify the shopkeeper (new incoming order) and the customer (confirmation).
@@ -136,6 +167,16 @@ router.post("/:id/verify-payment", protect, async (req, res, next) => {
     if (!order) {
       res.status(404);
       throw new Error("Order not found");
+    }
+    // Only the customer who placed the order (or an admin) may confirm its
+    // payment. Without this, any authenticated user could POST a paymentId for
+    // someone else's order and flip it to "paid" (demo signatures always pass).
+    if (
+      req.user.role !== "admin" &&
+      order.customer.toString() !== req.user._id.toString()
+    ) {
+      res.status(403);
+      throw new Error("Not allowed to pay for this order");
     }
     const ok = verifyPaymentSignature({
       orderId: order.razorpay.orderId,
@@ -211,7 +252,7 @@ router.get("/shop", protect, authorize("shopkeeper", "admin"), async (req, res, 
 router.get("/:id", protect, async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate("shop", "name category address phone owner")
+      .populate("shop", "name category address phone owner geo")
       .populate("customer", "name phone email");
     if (!order) {
       res.status(404);
@@ -249,6 +290,14 @@ router.put("/:id/status", protect, authorize("shopkeeper", "admin"), async (req,
     ) {
       res.status(403);
       throw new Error("Not your shop's order");
+    }
+    // Enforce forward-only transitions so a status can't jump out of order
+    // (e.g. placed -> delivered) or reopen a finished order. Admins are held
+    // to the same state machine to keep the audit trail sane.
+    const allowed = NEXT_ALLOWED[order.status] || [];
+    if (status !== order.status && !allowed.includes(status)) {
+      res.status(400);
+      throw new Error(`Cannot change status from ${order.status} to ${status}`);
     }
     order.status = status;
     order.statusHistory.push({ status, at: new Date() });

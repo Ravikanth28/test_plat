@@ -6,6 +6,9 @@ import {
   STATUS_STEPS,
   statusLabel,
   statusBadgeClass,
+  distanceKm,
+  etaMinutes,
+  formatDistance,
 } from "../utils.js";
 
 export default function OrderDetail() {
@@ -54,6 +57,12 @@ export default function OrderDetail() {
   const cancelled = order.status === "cancelled";
   const currentIdx = STATUS_STEPS.findIndex((s) => s.key === order.status);
 
+  // Estimated delivery time from shop -> customer, shown while the order is
+  // still in flight and we have both endpoints' coordinates.
+  const dist = distanceKm(order.shop?.geo, order.geo);
+  const eta = etaMinutes(dist);
+  const showEta = eta != null && !cancelled && order.status !== "delivered";
+
   return (
     <div className="container">
       <div className="crumbs">
@@ -78,6 +87,11 @@ export default function OrderDetail() {
           {/* Tracking timeline */}
           <div className="card mb">
             <h3 style={{ marginTop: 0 }}>Track Order</h3>
+            {showEta && (
+              <div className="badge badge-blue" style={{ marginBottom: 10 }}>
+                🕒 Est. delivery ~{eta} min • {formatDistance(dist)} away
+              </div>
+            )}
             {cancelled ? (
               <div className="error">This order was cancelled.</div>
             ) : (

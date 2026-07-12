@@ -51,6 +51,9 @@ const orderSchema = new mongoose.Schema(
       signature: String,
     },
     status: { type: String, enum: ORDER_STATUSES, default: "placed" },
+    // Client-supplied key that lets us de-dupe a retried checkout (double-tap,
+    // flaky network) so the same cart doesn't create two orders.
+    idempotencyKey: { type: String, index: true },
     statusHistory: [
       {
         status: { type: String, enum: ORDER_STATUSES },

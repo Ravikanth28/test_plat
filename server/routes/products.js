@@ -5,6 +5,22 @@ import { protect, authorize } from "../middleware/auth.js";
 
 const router = express.Router();
 
+// Escape user input before using it in a $regex (prevents ReDoS / query injection).
+const safeRegex = (input) => {
+  const s = String(input).slice(0, 80);
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+// Fields a shopkeeper may set on a product. `shop` is server-controlled.
+const PRODUCT_WRITABLE = ["name", "description", "price", "unit", "image", "category", "inStock", "stock"];
+const pickProductFields = (body = {}) => {
+  const out = {};
+  for (const k of PRODUCT_WRITABLE) {
+    if (body[k] !== undefined) out[k] = body[k];
+  }
+  return out;
+};
+
 const ensureOwnerOfShop = async (user, shopId) => {
   const shop = await Shop.findById(shopId);
   if (!shop) return { ok: false, code: 404, msg: "Shop not found" };
@@ -22,10 +38,11 @@ router.get("/", async (req, res, next) => {
     if (shop) filter.shop = shop;
     if (category && category !== "all") filter.category = category;
     if (search) {
+      const rx = safeRegex(search);
       filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { category: { $regex: search, $options: "i" } },
+        { name: { $regex: rx, $options: "i" } },
+        { description: { $regex: rx, $options: "i" } },
+        { category: { $regex: rx, $options: "i" } },
       ];
     }
     const products = await Product.find(filter)
@@ -59,7 +76,7 @@ router.post("/", protect, authorize("shopkeeper", "admin"), async (req, res, nex
       res.status(400);
       throw new Error("Create your shop first");
     }
-    const product = await Product.create({ ...req.body, shop: shop._id });
+    const product = await Product.create({ ...pickProductFields(req.body), shop: shop._id });
     res.status(201).json(product);
   } catch (err) {
     next(err);
@@ -79,7 +96,7 @@ router.put("/:id", protect, authorize("shopkeeper", "admin"), async (req, res, n
       res.status(check.code);
       throw new Error(check.msg);
     }
-    Object.assign(product, req.body);
+    Object.assign(product, pickProductFields(req.body));
     await product.save();
     res.json(product);
   } catch (err) {

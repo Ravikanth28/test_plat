@@ -11,6 +11,8 @@ import {
   isImageUrl,
   tileGradient,
   deliveryTime,
+  distanceKm,
+  formatDistance,
 } from "../utils.js";
 
 function Thumb({ image, fallback, className, style, children }) {
@@ -33,6 +35,13 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  // "Near me" sorting: once the user shares their location we sort shops by
+  // distance and show a distance badge. geoBusy guards the async permission
+  // prompt; geoErr surfaces a denied/unavailable message.
+  const [userGeo, setUserGeo] = useState(null);
+  const [nearMe, setNearMe] = useState(false);
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoErr, setGeoErr] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -60,6 +69,52 @@ export default function Home() {
     e.preventDefault();
     setQuery(search.trim());
   };
+
+  // Toggle "Near me". When turning on, ask the browser for the user's location
+  // (once) and remember it; turning off just clears the sort flag. We keep the
+  // captured coordinates so re-toggling doesn't prompt again.
+  const toggleNearMe = () => {
+    if (nearMe) {
+      setNearMe(false);
+      return;
+    }
+    if (userGeo) {
+      setNearMe(true);
+      return;
+    }
+    if (!navigator.geolocation) {
+      setGeoErr("Location isn't supported on this device.");
+      return;
+    }
+    setGeoBusy(true);
+    setGeoErr("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setNearMe(true);
+        setGeoBusy(false);
+      },
+      () => {
+        setGeoErr("Couldn't get your location. Please allow access and retry.");
+        setGeoBusy(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  // Attach a distance (km) to each shop when we know the user's location, then
+  // sort ascending if "Near me" is active. Shops without geo sink to the bottom.
+  const shopsView = shops.map((s) => ({
+    ...s,
+    _dist: userGeo ? distanceKm(userGeo, s.geo) : null,
+  }));
+  if (nearMe && userGeo) {
+    shopsView.sort((a, b) => {
+      const da = a._dist == null ? Infinity : a._dist;
+      const db = b._dist == null ? Infinity : b._dist;
+      return da - db;
+    });
+  }
 
   return (
     <div>
@@ -138,9 +193,23 @@ export default function Home() {
           ))}
         </div>
 
-        <h2 className="section-title">
-          {category === "all" ? "All shops near you" : catLabel(category) + " shops"}
-        </h2>
+        <div className="row between" style={{ alignItems: "center" }}>
+          <h2 className="section-title" style={{ marginBottom: 0 }}>
+            {category === "all" ? "All shops near you" : catLabel(category) + " shops"}
+          </h2>
+          <button
+            className={`btn btn-sm ${nearMe ? "" : "btn-ghost"}`}
+            onClick={toggleNearMe}
+            disabled={geoBusy}
+          >
+            {geoBusy ? "Locating…" : nearMe ? "📍 Near me • On" : "📍 Near me"}
+          </button>
+        </div>
+        {geoErr && (
+          <p className="muted small" style={{ margin: "6px 0 0" }}>
+            {geoErr}
+          </p>
+        )}
 
         {loading ? (
           <div className="loading">Loading shops…</div>
@@ -151,7 +220,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-3">
-            {shops.map((s) => (
+            {shopsView.map((s) => (
               <Link to={`/shop/${s._id}`} key={s._id} className="card shop-card">
                 <Thumb
                   className="shop-thumb"
@@ -160,6 +229,11 @@ export default function Home() {
                   style={{ background: tileGradient(s.name) }}
                 >
                   <span className="eta">🕒 {deliveryTime(s._id)} min</span>
+                  {s._dist != null && (
+                    <span className="eta" style={{ left: "auto", right: 10 }}>
+                      📍 {formatDistance(s._dist)}
+                    </span>
+                  )}
                   <FavoriteButton shopId={s._id} />
                 </Thumb>
                 <div className="shop-body">

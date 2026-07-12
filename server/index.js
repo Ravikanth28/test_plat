@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -18,6 +20,16 @@ import { initPush } from "./utils/push.js";
 
 dotenv.config();
 
+// Fail fast if the JWT signing secret is missing or left at an insecure
+// placeholder — tokens signed with a weak/blank secret are trivially forgeable.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET.length < 16 || JWT_SECRET === "changeme") {
+  console.error(
+    "FATAL: JWT_SECRET is missing or too weak. Set a long, random JWT_SECRET (>= 16 chars)."
+  );
+  process.exit(1);
+}
+
 // Configure Web Push (VAPID) once at startup. No-ops if keys aren't set.
 initPush();
 
@@ -26,14 +38,64 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+// Render terminates TLS at its proxy; trust it so rate-limit / secure cookies
+// see the real client IP and protocol.
+app.set("trust proxy", 1);
+
+// Security headers. CSP and COEP are disabled because the SPA loads the
+// Razorpay checkout script and inline styles; enabling the strict defaults
+// would break checkout and the PWA. Everything else (HSTS, no-sniff, frameguard)
+// stays on.
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// Lock CORS to known origins. In production the client is served from the same
+// origin, so browsers don't send cross-origin API calls; the dev Vite server
+// (:5173) and any explicit CLIENT_URL are allowed. Requests with no Origin
+// header (curl, health checks, same-origin) are permitted.
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+].filter(Boolean);
+app.use(
+  cors({
+    origin(origin, cb) {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: "1mb" }));
+
+// Rate limiting. A generous global cap protects the API from abuse/scraping,
+// and a tight limiter on the auth routes slows credential-stuffing/brute force.
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many attempts. Please try again later." },
+});
+app.use("/api", generalLimiter);
 
 // Health check (useful for Render)
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date() }));
 
 // API routes
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
