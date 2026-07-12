@@ -1,6 +1,6 @@
 // LocalMart service worker — enables installability (PWA) and basic offline.
 // Strategy: network-first for navigation & API, cache-first for static assets.
-const CACHE = "localmart-v2";
+const CACHE = "localmart-v3";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -48,5 +48,45 @@ self.addEventListener("fetch", (event) => {
           return res;
         })
     )
+  );
+});
+
+// --- Web Push -------------------------------------------------------------
+// Background notifications: shown even when the app/tab is closed. The server
+// sends a JSON payload { title, body, link, type }.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: "LocalMart", body: event.data ? event.data.text() : "" };
+  }
+  const title = data.title || "LocalMart";
+  const options = {
+    body: data.body || "",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    data: { link: data.link || "/", type: data.type || "generic" },
+    tag: data.type || undefined, // collapse same-type notifications
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Focus an existing tab (or open a new one) at the notification's link.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const link = (event.notification.data && event.notification.data.link) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          client.focus();
+          if ("navigate" in client) client.navigate(link).catch(() => {});
+          return;
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(link);
+    })
   );
 });

@@ -10,10 +10,20 @@ import {
   isRazorpayLive,
 } from "../utils/razorpay.js";
 import { streamInvoice } from "../utils/invoice.js";
+import { notify } from "../utils/notify.js";
 
 const router = express.Router();
 
 const DELIVERY_FEE = 20;
+
+// Human-friendly copy for each order status, shown to the customer.
+const STATUS_COPY = {
+  accepted: { title: "Order accepted", body: "The shop accepted your order." },
+  preparing: { title: "Order being prepared", body: "Your order is being prepared." },
+  out_for_delivery: { title: "Out for delivery", body: "Your order is on the way!" },
+  delivered: { title: "Order delivered", body: "Your order has been delivered. Enjoy!" },
+  cancelled: { title: "Order cancelled", body: "Your order was cancelled." },
+};
 
 // POST /api/orders  -> customer places an order
 router.post("/", protect, async (req, res, next) => {
@@ -85,6 +95,20 @@ router.post("/", protect, async (req, res, next) => {
       };
     }
 
+    // Notify the shopkeeper (new incoming order) and the customer (confirmation).
+    notify(shop.owner, {
+      type: "order_new",
+      title: "New order received",
+      body: `Order ${order.orderNo} • ₹${total} • ${orderItems.length} item(s)`,
+      link: "/shop",
+    });
+    notify(req.user._id, {
+      type: "order_placed",
+      title: "Order placed",
+      body: `Your order ${order.orderNo} at ${shop.name} was placed.`,
+      link: `/orders/${order._id}`,
+    });
+
     res.status(201).json({ order, payment });
   } catch (err) {
     next(err);
@@ -95,7 +119,7 @@ router.post("/", protect, async (req, res, next) => {
 router.post("/:id/verify-payment", protect, async (req, res, next) => {
   try {
     const { razorpayPaymentId, razorpaySignature } = req.body;
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("shop", "owner name");
     if (!order) {
       res.status(404);
       throw new Error("Order not found");
@@ -108,6 +132,12 @@ router.post("/:id/verify-payment", protect, async (req, res, next) => {
     if (!ok) {
       order.paymentStatus = "failed";
       await order.save();
+      notify(order.customer, {
+        type: "payment",
+        title: "Payment failed",
+        body: `Payment for order ${order.orderNo} could not be verified.`,
+        link: `/orders/${order._id}`,
+      });
       res.status(400);
       throw new Error("Payment verification failed");
     }
@@ -115,6 +145,23 @@ router.post("/:id/verify-payment", protect, async (req, res, next) => {
     order.razorpay.paymentId = razorpayPaymentId;
     order.razorpay.signature = razorpaySignature;
     await order.save();
+
+    // Notify customer (payment confirmed) and shopkeeper (paid order).
+    notify(order.customer, {
+      type: "payment",
+      title: "Payment successful",
+      body: `Payment for order ${order.orderNo} was received. ₹${order.total}`,
+      link: `/orders/${order._id}`,
+    });
+    if (order.shop?.owner) {
+      notify(order.shop.owner, {
+        type: "payment",
+        title: "Order paid",
+        body: `Order ${order.orderNo} was paid online.`,
+        link: "/shop",
+      });
+    }
+
     res.json({ message: "Payment verified", order });
   } catch (err) {
     next(err);
@@ -197,6 +244,18 @@ router.put("/:id/status", protect, authorize("shopkeeper", "admin"), async (req,
       order.paymentStatus = "paid";
     }
     await order.save();
+
+    // Notify the customer about the status change.
+    const copy = STATUS_COPY[status];
+    if (copy) {
+      notify(order.customer, {
+        type: status === "cancelled" ? "order_cancelled" : "order_status",
+        title: copy.title,
+        body: `${copy.body} (Order ${order.orderNo})`,
+        link: `/orders/${order._id}`,
+      });
+    }
+
     res.json(order);
   } catch (err) {
     next(err);

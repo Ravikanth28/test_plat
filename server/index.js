@@ -13,8 +13,13 @@ import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import adminRoutes from "./routes/admin.js";
 import favoriteRoutes from "./routes/favorites.js";
+import notificationRoutes from "./routes/notifications.js";
+import { initPush } from "./utils/push.js";
 
 dotenv.config();
+
+// Configure Web Push (VAPID) once at startup. No-ops if keys aren't set.
+initPush();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +39,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve React build in production (single service on Render)
 if (process.env.NODE_ENV === "production") {

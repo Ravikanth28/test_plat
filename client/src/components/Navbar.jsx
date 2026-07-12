@@ -6,6 +6,7 @@ import { useCart } from "../context/CartContext.jsx";
 import InstallApp from "./InstallApp.jsx";
 import DownloadApp from "./DownloadApp.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
+import NotificationBell from "./NotificationBell.jsx";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -96,6 +97,8 @@ export default function Navbar() {
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
 
+          {user && <NotificationBell />}
+
           <ThemeToggle className="btn btn-ghost btn-sm" />
           <DownloadApp className="btn btn-ghost btn-sm" />
           <InstallApp className="btn btn-ghost btn-sm" />
@@ -116,6 +119,7 @@ export default function Navbar() {
 
         {/* Mobile controls */}
         <div className="nav-mobile">
+          {user && <NotificationBell />}
           <Link to="/cart" className="nav-cart" title="Cart">
             🛒
             {count > 0 && <span className="cart-badge">{count}</span>}

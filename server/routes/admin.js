@@ -4,6 +4,7 @@ import Shop from "../models/Shop.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import { protect, authorize } from "../middleware/auth.js";
+import { notify } from "../utils/notify.js";
 
 const router = express.Router();
 
@@ -94,11 +95,25 @@ router.get("/shops", async (req, res, next) => {
 router.put("/shops/:id/approve", async (req, res, next) => {
   try {
     const { isApproved } = req.body;
+    const approved = Boolean(isApproved);
     const shop = await Shop.findByIdAndUpdate(
       req.params.id,
-      { isApproved: Boolean(isApproved) },
+      { isApproved: approved },
       { new: true }
     );
+
+    // Let the shop owner know the approval decision.
+    if (shop?.owner) {
+      notify(shop.owner, {
+        type: "shop_approved",
+        title: approved ? "Shop approved" : "Shop unapproved",
+        body: approved
+          ? `${shop.name} is now live and visible to customers.`
+          : `${shop.name} has been set to unapproved.`,
+        link: "/shop",
+      });
+    }
+
     res.json(shop);
   } catch (err) {
     next(err);

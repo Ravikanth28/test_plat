@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
 import { signToken, sanitizeUser } from "../utils/token.js";
+import { notify, notifyAdmins } from "../utils/notify.js";
 
 const router = express.Router();
 
@@ -28,6 +29,25 @@ router.post("/register", async (req, res, next) => {
       address,
       role: safeRole,
     });
+    // Welcome the new user, and alert admins when a shopkeeper joins.
+    notify(user._id, {
+      type: "signup",
+      title: "Welcome to LocalMart",
+      body:
+        safeRole === "shopkeeper"
+          ? "Your account is ready. Create your shop to start selling."
+          : "Your account is ready. Start shopping from local stores!",
+      link: safeRole === "shopkeeper" ? "/shop" : "/",
+    });
+    if (safeRole === "shopkeeper") {
+      notifyAdmins({
+        type: "signup",
+        title: "New shopkeeper signed up",
+        body: `${name} registered as a shopkeeper.`,
+        link: "/admin",
+      });
+    }
+
     res.status(201).json({ token: signToken(user._id), user: sanitizeUser(user) });
   } catch (err) {
     next(err);

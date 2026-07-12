@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import Review from "../models/Review.js";
 import Order from "../models/Order.js";
 import { protect, authorize } from "../middleware/auth.js";
+import { notifyAdmins } from "../utils/notify.js";
 
 const router = express.Router();
 
@@ -58,6 +59,15 @@ router.post("/", protect, authorize("shopkeeper", "admin"), async (req, res, nex
     }
     const shop = await Shop.create({ ...req.body, owner: req.user._id });
     await User.findByIdAndUpdate(req.user._id, { shop: shop._id });
+
+    // Notify all admins that a new shop needs approval.
+    notifyAdmins({
+      type: "shop_new",
+      title: "New shop awaiting approval",
+      body: `${shop.name} (${shop.category}) was submitted by ${req.user.name}.`,
+      link: "/admin",
+    });
+
     res.status(201).json(shop);
   } catch (err) {
     next(err);

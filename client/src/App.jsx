@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import UpdateBanner from "./components/UpdateBanner.jsx";
+import NotificationToast from "./components/NotificationToast.jsx";
 
 import Home from "./pages/Home.jsx";
 import ShopDetail from "./pages/ShopDetail.jsx";
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <UpdateBanner />
+      <NotificationToast />
       <Navbar />
       <main className="app-main">
       <Routes>
