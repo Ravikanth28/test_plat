@@ -31,6 +31,9 @@ export default function ShopDetail() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [ratingInfo, setRatingInfo] = useState(null);
+  // Menu filters: veg preference (all/veg/nonveg) + price sort.
+  const [vegPref, setVegPref] = useState("all");
+  const [priceSort, setPriceSort] = useState("default");
   const { items, addItem, decItem, count } = useCart();
 
   useEffect(() => {
@@ -51,9 +54,13 @@ export default function ShopDetail() {
   const shownRating = ratingInfo?.rating ?? shop.rating;
   const shownReviews = ratingInfo?.numReviews ?? shop.numReviews ?? 0;
   const qtyOf = (pid) => items.find((i) => i.product === pid)?.qty || 0;
-  const filtered = products.filter((p) =>
+  let filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+  if (vegPref === "veg") filtered = filtered.filter((p) => p.isVeg);
+  else if (vegPref === "nonveg") filtered = filtered.filter((p) => !p.isVeg);
+  if (priceSort === "low") filtered = [...filtered].sort((a, b) => a.price - b.price);
+  else if (priceSort === "high") filtered = [...filtered].sort((a, b) => b.price - a.price);
 
   return (
     <div className="container mt">
@@ -123,6 +130,36 @@ export default function ShopDetail() {
         />
       </div>
 
+      <div className="row gap wrap mb" style={{ alignItems: "center" }}>
+        {[
+          { key: "all", label: "All" },
+          { key: "veg", label: "🟢 Veg" },
+          { key: "nonveg", label: "🔴 Non-veg" },
+        ].map((o) => (
+          <button
+            key={o.key}
+            className={`filter-chip ${vegPref === o.key ? "active" : ""}`}
+            onClick={() => setVegPref(o.key)}
+          >
+            {o.label}
+          </button>
+        ))}
+        <span style={{ flex: 1 }} />
+        {[
+          { key: "default", label: "Sort" },
+          { key: "low", label: "₹ Low→High" },
+          { key: "high", label: "₹ High→Low" },
+        ].map((o) => (
+          <button
+            key={o.key}
+            className={`filter-chip ${priceSort === o.key ? "active" : ""}`}
+            onClick={() => setPriceSort(o.key)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+
       <div className="card">
         {filtered.length === 0 ? (
           <p className="muted">No items found.</p>
@@ -137,7 +174,13 @@ export default function ShopDetail() {
                   style={{ background: tileGradient(p.name) }}
                 />
                 <div className="prod-info">
-                  <div className="nm">{p.name}</div>
+                  <div className="nm">
+                    <span
+                      className={`veg-dot ${p.isVeg ? "veg" : "nonveg"}`}
+                      title={p.isVeg ? "Veg" : "Non-veg"}
+                    />
+                    {p.name}
+                  </div>
                   <div className="muted small">
                     {p.description || p.category} • per {p.unit}
                   </div>

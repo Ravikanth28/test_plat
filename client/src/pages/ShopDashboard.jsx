@@ -46,6 +46,12 @@ export default function ShopDashboard() {
     setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, ...updated } : o)));
   };
 
+  // Toggle a shop-level flag (isOpen / freeDelivery / isPureVeg) from the dashboard.
+  const toggleShopFlag = async (key) => {
+    const updated = await api.put(`/shops/${shop._id}`, { [key]: !shop[key] });
+    setShop(updated);
+  };
+
   if (loading) return <div className="loading">Loading dashboard...</div>;
 
   // No shop yet -> create form
@@ -72,6 +78,28 @@ export default function ShopDashboard() {
           Your shop is not yet approved by admin, so it won't appear to customers.
         </div>
       )}
+
+      <div className="card mt row gap wrap" style={{ alignItems: "center" }}>
+        <span className="filter-label" style={{ marginRight: 4 }}>Shop settings:</span>
+        <button
+          className={`filter-chip ${shop.isOpen ? "active" : ""}`}
+          onClick={() => toggleShopFlag("isOpen")}
+        >
+          {shop.isOpen ? "🟢 Open" : "⛔ Closed"}
+        </button>
+        <button
+          className={`filter-chip ${shop.freeDelivery ? "active" : ""}`}
+          onClick={() => toggleShopFlag("freeDelivery")}
+        >
+          🚴 Free delivery
+        </button>
+        <button
+          className={`filter-chip ${shop.isPureVeg ? "active" : ""}`}
+          onClick={() => toggleShopFlag("isPureVeg")}
+        >
+          🥗 Pure veg
+        </button>
+      </div>
 
       <div className="tabs mt">
         <button className={`tab ${tab === "orders" ? "active" : ""}`} onClick={() => setTab("orders")}>
@@ -269,7 +297,7 @@ function CreateShop({ onCreated }) {
 }
 
 function ProductManager({ products, setProducts, msg, setMsg }) {
-  const empty = { name: "", price: "", unit: "piece", category: "general", description: "" };
+  const empty = { name: "", price: "", unit: "piece", category: "general", description: "", stock: 100, isVeg: true };
   const [form, setForm] = useState(empty);
   const [editId, setEditId] = useState(null);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -277,7 +305,7 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
   const submit = async (e) => {
     e.preventDefault();
     setMsg("");
-    const payload = { ...form, price: Number(form.price) };
+    const payload = { ...form, price: Number(form.price), stock: Number(form.stock) };
     try {
       if (editId) {
         const updated = await api.put(`/products/${editId}`, payload);
@@ -302,6 +330,8 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
       unit: p.unit,
       category: p.category,
       description: p.description,
+      stock: p.stock ?? 100,
+      isVeg: p.isVeg !== false,
     });
   };
 
@@ -340,6 +370,35 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
         <div className="field">
           <label>Description</label>
           <input value={form.description} onChange={set("description")} />
+        </div>
+        <div className="field">
+          <label>Stock quantity</label>
+          <input
+            type="number"
+            min="0"
+            value={form.stock}
+            onChange={set("stock")}
+            placeholder="100"
+          />
+        </div>
+        <div className="field">
+          <label>Food type</label>
+          <div className="row gap">
+            <button
+              type="button"
+              className={`filter-chip ${form.isVeg ? "active" : ""}`}
+              onClick={() => setForm({ ...form, isVeg: true })}
+            >
+              🟢 Veg
+            </button>
+            <button
+              type="button"
+              className={`filter-chip ${!form.isVeg ? "active" : ""}`}
+              onClick={() => setForm({ ...form, isVeg: false })}
+            >
+              🔴 Non-veg
+            </button>
+          </div>
         </div>
         <button className="btn btn-block">{editId ? "Update" : "Add Product"}</button>
         {editId && (
@@ -389,6 +448,9 @@ function ProductManager({ products, setProducts, msg, setMsg }) {
                     >
                       {p.inStock ? "In stock" : "Out"}
                     </button>
+                    <div className="muted small" style={{ marginTop: 2 }}>
+                      {p.stock ?? 0} left {p.isVeg === false ? "· 🔴" : "· 🟢"}
+                    </div>
                   </td>
                   <td>
                     <button className="btn btn-ghost btn-sm" onClick={() => edit(p)}>

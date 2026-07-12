@@ -66,13 +66,23 @@ router.post("/", protect, async (req, res, next) => {
       throw new Error("Shop not found");
     }
 
-    // Rebuild items from DB to prevent price tampering
+    // Rebuild items from DB to prevent price tampering, and enforce stock so a
+    // customer can't buy more than is available (or buy an out-of-stock item).
     const orderItems = [];
+    const stockUpdates = []; // { product, qty } to decrement after the order saves
     let itemsTotal = 0;
     for (const line of items) {
       const product = await Product.findById(line.product);
       if (!product) continue;
       const qty = Math.max(1, Number(line.qty) || 1);
+      if (!product.inStock || product.stock <= 0) {
+        res.status(409);
+        throw new Error(`"${product.name}" is out of stock`);
+      }
+      if (product.stock < qty) {
+        res.status(409);
+        throw new Error(`Only ${product.stock} of "${product.name}" left`);
+      }
       itemsTotal += product.price * qty;
       orderItems.push({
         product: product._id,
@@ -81,13 +91,16 @@ router.post("/", protect, async (req, res, next) => {
         qty,
         unit: product.unit,
       });
+      stockUpdates.push({ product, qty });
     }
     if (!orderItems.length) {
       res.status(400);
       throw new Error("No valid products in cart");
     }
 
-    const total = itemsTotal + DELIVERY_FEE;
+    // Free-delivery shops waive the flat fee; everyone else pays it.
+    const deliveryFee = shop.freeDelivery ? 0 : DELIVERY_FEE;
+    const total = itemsTotal + deliveryFee;
     const method = paymentMethod === "online" ? "online" : "cod";
 
     // Keep the shared coordinates only if they're valid numbers.
@@ -105,7 +118,7 @@ router.post("/", protect, async (req, res, next) => {
       shop: shop._id,
       items: orderItems,
       itemsTotal,
-      deliveryFee: DELIVERY_FEE,
+      deliveryFee,
       total,
       deliveryAddress,
       geo: location,
@@ -135,6 +148,14 @@ router.post("/", protect, async (req, res, next) => {
         res.status(502);
         throw new Error("Could not start payment. Please try again.");
       }
+    }
+
+    // Decrement stock now that the order exists. When a product hits zero we
+    // flip it out of stock so it shows the "Out of stock" badge everywhere.
+    for (const { product, qty } of stockUpdates) {
+      product.stock = Math.max(0, product.stock - qty);
+      if (product.stock === 0) product.inStock = false;
+      await product.save();
     }
 
     // Notify the shopkeeper (new incoming order) and the customer (confirmation).

@@ -18,7 +18,7 @@ const safeRegex = (input) => {
 
 // Fields a shopkeeper may set when creating/updating a shop. Everything else
 // (isApproved, rating, numReviews, owner) stays server-controlled.
-const SHOP_WRITABLE = ["name", "category", "description", "address", "phone", "image", "isOpen"];
+const SHOP_WRITABLE = ["name", "category", "description", "address", "phone", "image", "isOpen", "freeDelivery", "isPureVeg"];
 
 // Keep only whitelisted keys; normalise geo into {lat,lng} of finite numbers.
 const pickShopFields = (body = {}) => {

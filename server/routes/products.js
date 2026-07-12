@@ -12,7 +12,7 @@ const safeRegex = (input) => {
 };
 
 // Fields a shopkeeper may set on a product. `shop` is server-controlled.
-const PRODUCT_WRITABLE = ["name", "description", "price", "unit", "image", "category", "inStock", "stock"];
+const PRODUCT_WRITABLE = ["name", "description", "price", "unit", "image", "category", "inStock", "stock", "isVeg"];
 const pickProductFields = (body = {}) => {
   const out = {};
   for (const k of PRODUCT_WRITABLE) {

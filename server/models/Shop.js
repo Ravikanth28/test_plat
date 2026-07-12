@@ -22,6 +22,11 @@ const shopSchema = new mongoose.Schema(
       lng: Number,
     },
     isOpen: { type: Boolean, default: true },
+    // Waive the delivery fee for this shop's orders when true, and let customers
+    // filter for it on the home page.
+    freeDelivery: { type: Boolean, default: false },
+    // Shop-level "pure veg" marker, surfaced as a home-page filter.
+    isPureVeg: { type: Boolean, default: false },
     // Admin approval so admin can "control all"
     isApproved: { type: Boolean, default: false },
     rating: { type: Number, default: 4.2 },

@@ -11,6 +11,9 @@ const productSchema = new mongoose.Schema(
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
     inStock: { type: Boolean, default: true },
     stock: { type: Number, default: 100 },
+    // Food veg/non-veg marker for menu filtering (green/red dot). Defaults to
+    // veg; non-food categories can ignore it.
+    isVeg: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -98,6 +98,10 @@ export default function Home() {
   const [minRating, setMinRating] = useState(0);
   // Sub-category chip within the chosen category ("all" = no sub-filter).
   const [sub, setSub] = useState("all");
+  // Quick toggles: only open shops, only free-delivery shops, only pure-veg shops.
+  const [openNow, setOpenNow] = useState(false);
+  const [freeDelivery, setFreeDelivery] = useState(false);
+  const [pureVeg, setPureVeg] = useState(false);
 
   // Hero ad banners link to /?cat=food etc. Apply that category when present so
   // clicking a banner CTA filters the shop list.
@@ -182,6 +186,9 @@ export default function Home() {
   if (minRating > 0) {
     shopsView = shopsView.filter((s) => (s.rating || 0) >= minRating);
   }
+  if (openNow) shopsView = shopsView.filter((s) => s.isOpen);
+  if (freeDelivery) shopsView = shopsView.filter((s) => s.freeDelivery);
+  if (pureVeg) shopsView = shopsView.filter((s) => s.isPureVeg);
   // Sub-category keyword match (best-effort on name + description).
   const subOpts = SUBCATS[category] || null;
   if (sub !== "all" && subOpts) {
@@ -352,6 +359,30 @@ export default function Home() {
             </div>
 
             <div className="filter-group">
+              <span className="filter-label">Quick filters</span>
+              <div className="filter-opts">
+                <button
+                  className={`filter-chip ${openNow ? "active" : ""}`}
+                  onClick={() => setOpenNow((v) => !v)}
+                >
+                  🟢 Open now
+                </button>
+                <button
+                  className={`filter-chip ${freeDelivery ? "active" : ""}`}
+                  onClick={() => setFreeDelivery((v) => !v)}
+                >
+                  🚴 Free delivery
+                </button>
+                <button
+                  className={`filter-chip ${pureVeg ? "active" : ""}`}
+                  onClick={() => setPureVeg((v) => !v)}
+                >
+                  🥗 Pure veg
+                </button>
+              </div>
+            </div>
+
+            <div className="filter-group">
               <span className="filter-label">Location</span>
               <button
                 className={`btn btn-sm btn-block ${nearMe ? "" : "btn-ghost"}`}
@@ -398,6 +429,9 @@ export default function Home() {
                     setMinRating(0);
                     setSort("recommended");
                     setSub("all");
+                    setOpenNow(false);
+                    setFreeDelivery(false);
+                    setPureVeg(false);
                   }}
                 >
                   Reset filters
@@ -426,8 +460,11 @@ export default function Home() {
                         <h3>{s.name}</h3>
                         <span className="rating-pill">★ {s.rating}</span>
                       </div>
-                      <div>
+                      <div className="row gap" style={{ flexWrap: "wrap" }}>
                         <span className="badge badge-cat">{catLabel(s.category)}</span>
+                        {s.freeDelivery && <span className="badge badge-green">🚴 Free delivery</span>}
+                        {s.isPureVeg && <span className="badge badge-green">🥗 Pure veg</span>}
+                        {!s.isOpen && <span className="badge badge-red">Closed</span>}
                       </div>
                       <p className="muted small" style={{ margin: "2px 0 0" }}>
                         {s.description}
