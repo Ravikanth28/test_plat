@@ -81,7 +81,7 @@ function Thumb({ image, fallback, className, style, children }) {
 }
 
 export default function Home() {
-  const { t } = useLang();
+  const { t, tc } = useLang();
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("all");
@@ -159,7 +159,7 @@ export default function Home() {
       return;
     }
     if (!navigator.geolocation) {
-      setGeoErr("Location isn't supported on this device.");
+      setGeoErr(t("home.geoUnsupported"));
       return;
     }
     setGeoBusy(true);
@@ -171,7 +171,7 @@ export default function Home() {
         setGeoBusy(false);
       },
       () => {
-        setGeoErr("Couldn't get your location. Please allow access and retry.");
+        setGeoErr(t("home.geoDenied"));
         setGeoBusy(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
@@ -223,7 +223,7 @@ export default function Home() {
             <p className="sub">{t("home.hero.sub")}</p>
             <form className="search-bar" onSubmit={runSearch}>
               <input
-                placeholder='Search "paracetamol", "dosa", "milk", "pens"...'
+                placeholder={t("home.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -241,7 +241,7 @@ export default function Home() {
           <>
             <div className="row between mt">
               <h2 className="section-title" style={{ margin: 0 }}>
-                Results for "{query}"
+                {t("home.resultsFor")} "{query}"
               </h2>
               <button
                 className="btn btn-ghost btn-sm"
@@ -250,11 +250,11 @@ export default function Home() {
                   setSearch("");
                 }}
               >
-                Clear
+                {t("common.clear")}
               </button>
             </div>
             {products.length === 0 ? (
-              <p className="muted">No items found. Try a different keyword.</p>
+              <p className="muted">{t("home.noItems")}</p>
             ) : (
               <div className="grid grid-4 mt">
                 {products.map((p) => (
@@ -266,11 +266,11 @@ export default function Home() {
                       style={{ background: tileGradient(p.name) }}
                     />
                     <div className="badge badge-cat">
-                      {catIcon(p.shop.category)} {p.shop.name}
+                      {catIcon(p.shop.category)} {tc(p.shop.name)}
                     </div>
-                    <h4 style={{ margin: "10px 0 4px" }}>{p.name}</h4>
+                    <h4 style={{ margin: "10px 0 4px" }}>{tc(p.name)}</h4>
                     <div className="price">{rupee(p.price)}</div>
-                    <div className="muted small">Tap to view shop</div>
+                    <div className="muted small">{t("home.tapToView")}</div>
                   </Link>
                 ))}
               </div>
@@ -287,7 +287,7 @@ export default function Home() {
               onClick={() => setCategory(c.key)}
             >
               <span className="ico">{c.icon}</span>
-              <span className="lbl">{c.label}</span>
+              <span className="lbl">{tc(c.label)}</span>
             </button>
           ))}
         </div>
@@ -298,22 +298,22 @@ export default function Home() {
             <h3 className="filter-title">{t("home.filters")}</h3>
 
             <div className="filter-group">
-              <span className="filter-label">Showing</span>
+              <span className="filter-label">{t("home.showing")}</span>
               <div className="filter-showing">
                 {catIcon(category)}{" "}
-                {category === "all" ? "All shops" : catLabel(category)}
+                {category === "all" ? t("home.allShopsWord") : tc(catLabel(category))}
               </div>
             </div>
 
             {subOpts && (
               <div className="filter-group">
-                <span className="filter-label">{catLabel(category)} type</span>
+                <span className="filter-label">{tc(catLabel(category))} {t("home.typeSuffix")}</span>
                 <div className="filter-opts">
                   <button
                     className={`filter-chip ${sub === "all" ? "active" : ""}`}
                     onClick={() => setSub("all")}
                   >
-                    All
+                    {t("common.all")}
                   </button>
                   {subOpts.map((o) => (
                     <button
@@ -321,7 +321,7 @@ export default function Home() {
                       className={`filter-chip ${sub === o.key ? "active" : ""}`}
                       onClick={() => setSub(o.key)}
                     >
-                      {o.label}
+                      {tc(o.label)}
                     </button>
                   ))}
                 </div>
@@ -329,7 +329,7 @@ export default function Home() {
             )}
 
             <div className="filter-group">
-              <span className="filter-label">Sort by</span>
+              <span className="filter-label">{t("home.sortBy")}</span>
               <div className="filter-opts">
                 {SORTS.map((o) => (
                   <button
@@ -337,14 +337,14 @@ export default function Home() {
                     className={`filter-chip ${sort === o.key && !nearMe ? "active" : ""}`}
                     onClick={() => setSort(o.key)}
                   >
-                    {o.label}
+                    {tc(o.label)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="filter-group">
-              <span className="filter-label">Minimum rating</span>
+              <span className="filter-label">{t("home.minRating")}</span>
               <div className="filter-opts">
                 {[0, 4, 4.5].map((r) => (
                   <button
@@ -352,44 +352,44 @@ export default function Home() {
                     className={`filter-chip ${minRating === r ? "active" : ""}`}
                     onClick={() => setMinRating(r)}
                   >
-                    {r === 0 ? "Any" : `★ ${r}+`}
+                    {r === 0 ? t("common.any") : `★ ${r}+`}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="filter-group">
-              <span className="filter-label">Quick filters</span>
+              <span className="filter-label">{t("home.quickFilters")}</span>
               <div className="filter-opts">
                 <button
                   className={`filter-chip ${openNow ? "active" : ""}`}
                   onClick={() => setOpenNow((v) => !v)}
                 >
-                  🟢 Open now
+                  {t("home.openNowChip")}
                 </button>
                 <button
                   className={`filter-chip ${freeDelivery ? "active" : ""}`}
                   onClick={() => setFreeDelivery((v) => !v)}
                 >
-                  🚴 Free delivery
+                  {t("home.freeDeliveryChip")}
                 </button>
                 <button
                   className={`filter-chip ${pureVeg ? "active" : ""}`}
                   onClick={() => setPureVeg((v) => !v)}
                 >
-                  🥗 Pure veg
+                  {t("home.pureVegChip")}
                 </button>
               </div>
             </div>
 
             <div className="filter-group">
-              <span className="filter-label">Location</span>
+              <span className="filter-label">{t("home.location")}</span>
               <button
                 className={`btn btn-sm btn-block ${nearMe ? "" : "btn-ghost"}`}
                 onClick={toggleNearMe}
                 disabled={geoBusy}
               >
-                {geoBusy ? "Locating…" : nearMe ? "📍 Near me • On" : "📍 Near me"}
+                {geoBusy ? t("home.locating") : nearMe ? t("home.nearMeOn") : t("home.nearMe")}
               </button>
               {geoErr && (
                 <p className="muted small" style={{ margin: "6px 0 0" }}>
@@ -403,26 +403,28 @@ export default function Home() {
           <div className="shops-main">
             <div className="row between" style={{ alignItems: "center" }}>
               <h2 className="section-title" style={{ marginBottom: 0 }}>
-                {category === "all" ? t("home.allShopsNear") : catLabel(category) + " shops"}
+                {category === "all"
+                  ? t("home.allShopsNear")
+                  : `${tc(catLabel(category))} ${t("home.shopsSuffix")}`}
               </h2>
               {!loading && (
                 <span className="muted small">
-                  {shopsView.length} {shopsView.length === 1 ? "shop" : "shops"}
+                  {shopsView.length} {shopsView.length === 1 ? t("home.shopWord") : t("home.shopsWord")}
                 </span>
               )}
             </div>
 
             {loading ? (
-              <div className="loading">Loading shops…</div>
+              <div className="loading">{t("home.loadingShops")}</div>
             ) : shops.length === 0 ? (
               <div className="empty">
                 <div className="big">🛍️</div>
-                <p>No shops available in this category yet.</p>
+                <p>{t("home.noShopsCategory")}</p>
               </div>
             ) : shopsView.length === 0 ? (
               <div className="empty">
                 <div className="big">🔍</div>
-                <p>No shops match your filters.</p>
+                <p>{t("home.noMatch")}</p>
                 <button
                   className="btn btn-ghost btn-sm mt"
                   onClick={() => {
@@ -434,7 +436,7 @@ export default function Home() {
                     setPureVeg(false);
                   }}
                 >
-                  Reset filters
+                  {t("home.resetFilters")}
                 </button>
               </div>
             ) : (
@@ -457,17 +459,17 @@ export default function Home() {
                     </Thumb>
                     <div className="shop-body">
                       <div className="row between gap">
-                        <h3>{s.name}</h3>
+                        <h3>{tc(s.name)}</h3>
                         <span className="rating-pill">★ {s.rating}</span>
                       </div>
                       <div className="row gap" style={{ flexWrap: "wrap" }}>
-                        <span className="badge badge-cat">{catLabel(s.category)}</span>
-                        {s.freeDelivery && <span className="badge badge-green">🚴 Free delivery</span>}
-                        {s.isPureVeg && <span className="badge badge-green">🥗 Pure veg</span>}
-                        {!s.isOpen && <span className="badge badge-red">Closed</span>}
+                        <span className="badge badge-cat">{tc(catLabel(s.category))}</span>
+                        {s.freeDelivery && <span className="badge badge-green">{t("home.freeDeliveryChip")}</span>}
+                        {s.isPureVeg && <span className="badge badge-green">{t("home.pureVegChip")}</span>}
+                        {!s.isOpen && <span className="badge badge-red">{t("home.closed")}</span>}
                       </div>
                       <p className="muted small" style={{ margin: "2px 0 0" }}>
-                        {s.description}
+                        {tc(s.description)}
                       </p>
                       <p className="muted small" style={{ margin: 0 }}>
                         📍 {s.address}

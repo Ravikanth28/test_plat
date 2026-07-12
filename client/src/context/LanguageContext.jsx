@@ -1,5 +1,5 @@
 import { createContext, useContext, useCallback, useEffect, useState } from "react";
-import { DEFAULT_LANG, LANGUAGES, translate } from "../i18n.js";
+import { DEFAULT_LANG, LANGUAGES, translate, translateContent } from "../i18n.js";
 
 const LanguageContext = createContext();
 
@@ -38,11 +38,16 @@ export function LanguageProvider({ children }) {
     if (VALID.has(code)) setLangState(code);
   }, []);
 
-  // t(key, fallback) — translate for the active language.
+  // t(key, fallback) — translate fixed keyed UI strings for the active language.
   const t = useCallback((key, fallback) => translate(lang, key, fallback), [lang]);
 
+  // tc(text) — translate dynamic DB content (shop/product names, descriptions,
+  // category & subcategory labels) by exact English string. Falls back to the
+  // original text when no translation exists.
+  const tc = useCallback((text) => translateContent(lang, text), [lang]);
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t, languages: LANGUAGES }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, tc, languages: LANGUAGES }}>
       {children}
     </LanguageContext.Provider>
   );

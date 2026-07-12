@@ -53,6 +53,9 @@ const en = {
   "common.addToCart": "Add to Cart",
   "common.total": "Total",
   "common.free": "FREE",
+  "common.clear": "Clear",
+  "common.any": "Any",
+  "common.all": "All",
 
   // Home
   "home.hero.title": "Groceries, food & essentials — delivered fast",
@@ -68,6 +71,51 @@ const en = {
   "home.noShops": "No shops found",
   "home.openNow": "Open now",
   "home.freeDelivery": "Free delivery",
+  "home.searchPlaceholder": 'Search "paracetamol", "dosa", "milk", "pens"...',
+  "home.resultsFor": "Results for",
+  "home.noItems": "No items found. Try a different keyword.",
+  "home.tapToView": "Tap to view shop",
+  "home.showing": "Showing",
+  "home.allShopsWord": "All shops",
+  "home.typeSuffix": "type",
+  "home.sortBy": "Sort by",
+  "home.minRating": "Minimum rating",
+  "home.quickFilters": "Quick filters",
+  "home.openNowChip": "🟢 Open now",
+  "home.freeDeliveryChip": "🚴 Free delivery",
+  "home.pureVegChip": "🥗 Pure veg",
+  "home.location": "Location",
+  "home.locating": "Locating…",
+  "home.nearMe": "📍 Near me",
+  "home.nearMeOn": "📍 Near me • On",
+  "home.geoUnsupported": "Location isn't supported on this device.",
+  "home.geoDenied": "Couldn't get your location. Please allow access and retry.",
+  "home.shopWord": "shop",
+  "home.shopsWord": "shops",
+  "home.shopsSuffix": "shops",
+  "home.loadingShops": "Loading shops…",
+  "home.noShopsCategory": "No shops available in this category yet.",
+  "home.noMatch": "No shops match your filters.",
+  "home.resetFilters": "Reset filters",
+  "home.closed": "Closed",
+
+  // Shop detail
+  "shop.loading": "Loading shop…",
+  "shop.notFound": "Shop not found.",
+  "shop.openNow": "Open now",
+  "shop.menu": "Menu",
+  "shop.items": "items",
+  "shop.searchInShop": "Search in this shop…",
+  "shop.veg": "🟢 Veg",
+  "shop.nonVeg": "🔴 Non-veg",
+  "shop.sort": "Sort",
+  "shop.priceLowHigh": "₹ Low→High",
+  "shop.priceHighLow": "₹ High→Low",
+  "shop.noItems": "No items found.",
+  "shop.addPlus": "ADD +",
+  "shop.per": "per",
+  "shop.itemsInCart": "item(s) in cart",
+  "shop.viewCart": "View Cart →",
 
   // Cart / checkout
   "cart.title": "Your Cart",
@@ -146,6 +194,9 @@ const hi = {
   "common.addToCart": "कार्ट में जोड़ें",
   "common.total": "कुल",
   "common.free": "मुफ़्त",
+  "common.clear": "साफ़ करें",
+  "common.any": "कोई भी",
+  "common.all": "सभी",
 
   // Home
   "home.hero.title": "किराना, खाना और ज़रूरी सामान — तेज़ डिलीवरी",
@@ -161,6 +212,51 @@ const hi = {
   "home.noShops": "कोई दुकान नहीं मिली",
   "home.openNow": "अभी खुला",
   "home.freeDelivery": "मुफ़्त डिलीवरी",
+  "home.searchPlaceholder": 'खोजें "पैरासिटामोल", "डोसा", "दूध", "पेन"...',
+  "home.resultsFor": "परिणाम",
+  "home.noItems": "कोई आइटम नहीं मिला। कोई दूसरा कीवर्ड आज़माएँ।",
+  "home.tapToView": "दुकान देखने के लिए टैप करें",
+  "home.showing": "दिखा रहे हैं",
+  "home.allShopsWord": "सभी दुकानें",
+  "home.typeSuffix": "प्रकार",
+  "home.sortBy": "इसके अनुसार क्रमबद्ध करें",
+  "home.minRating": "न्यूनतम रेटिंग",
+  "home.quickFilters": "त्वरित फ़िल्टर",
+  "home.openNowChip": "🟢 अभी खुला",
+  "home.freeDeliveryChip": "🚴 मुफ़्त डिलीवरी",
+  "home.pureVegChip": "🥗 शुद्ध शाकाहारी",
+  "home.location": "स्थान",
+  "home.locating": "स्थान खोज रहे हैं…",
+  "home.nearMe": "📍 मेरे पास",
+  "home.nearMeOn": "📍 मेरे पास • चालू",
+  "home.geoUnsupported": "इस डिवाइस पर स्थान समर्थित नहीं है।",
+  "home.geoDenied": "आपका स्थान नहीं मिल सका। कृपया अनुमति दें और पुनः प्रयास करें।",
+  "home.shopWord": "दुकान",
+  "home.shopsWord": "दुकानें",
+  "home.shopsSuffix": "दुकानें",
+  "home.loadingShops": "दुकानें लोड हो रही हैं…",
+  "home.noShopsCategory": "इस श्रेणी में अभी कोई दुकान उपलब्ध नहीं है।",
+  "home.noMatch": "आपके फ़िल्टर से कोई दुकान मेल नहीं खाती।",
+  "home.resetFilters": "फ़िल्टर रीसेट करें",
+  "home.closed": "बंद",
+
+  // Shop detail
+  "shop.loading": "दुकान लोड हो रही है…",
+  "shop.notFound": "दुकान नहीं मिली।",
+  "shop.openNow": "अभी खुला",
+  "shop.menu": "मेन्यू",
+  "shop.items": "आइटम",
+  "shop.searchInShop": "इस दुकान में खोजें…",
+  "shop.veg": "🟢 शाकाहारी",
+  "shop.nonVeg": "🔴 मांसाहारी",
+  "shop.sort": "क्रमबद्ध करें",
+  "shop.priceLowHigh": "₹ कम→ज़्यादा",
+  "shop.priceHighLow": "₹ ज़्यादा→कम",
+  "shop.noItems": "कोई आइटम नहीं मिला।",
+  "shop.addPlus": "जोड़ें +",
+  "shop.per": "प्रति",
+  "shop.itemsInCart": "आइटम कार्ट में",
+  "shop.viewCart": "कार्ट देखें →",
 
   // Cart
   "cart.title": "आपका कार्ट",
@@ -239,6 +335,9 @@ const ta = {
   "common.addToCart": "கார்ட்டில் சேர்",
   "common.total": "மொத்தம்",
   "common.free": "இலவசம்",
+  "common.clear": "அழி",
+  "common.any": "ஏதேனும்",
+  "common.all": "அனைத்தும்",
 
   // Home
   "home.hero.title": "மளிகை, உணவு & அத்தியாவசியப் பொருட்கள் — விரைவாக",
@@ -254,6 +353,51 @@ const ta = {
   "home.noShops": "கடைகள் எதுவும் இல்லை",
   "home.openNow": "இப்போது திறந்துள்ளது",
   "home.freeDelivery": "இலவச டெலிவரி",
+  "home.searchPlaceholder": 'தேடுங்கள் "பாராசிட்டமால்", "தோசை", "பால்", "பேனா"...',
+  "home.resultsFor": "தேடல் முடிவுகள்",
+  "home.noItems": "பொருட்கள் எதுவும் இல்லை. வேறு சொல்லை முயற்சிக்கவும்.",
+  "home.tapToView": "கடையைப் பார்க்க தட்டவும்",
+  "home.showing": "காட்டுகிறது",
+  "home.allShopsWord": "அனைத்து கடைகள்",
+  "home.typeSuffix": "வகை",
+  "home.sortBy": "வரிசைப்படுத்து",
+  "home.minRating": "குறைந்தபட்ச மதிப்பீடு",
+  "home.quickFilters": "விரைவு வடிகட்டிகள்",
+  "home.openNowChip": "🟢 இப்போது திறந்துள்ளது",
+  "home.freeDeliveryChip": "🚴 இலவச டெலிவரி",
+  "home.pureVegChip": "🥗 சுத்த சைவம்",
+  "home.location": "இருப்பிடம்",
+  "home.locating": "இருப்பிடத்தைக் கண்டறிகிறது…",
+  "home.nearMe": "📍 அருகில்",
+  "home.nearMeOn": "📍 அருகில் • ஆன்",
+  "home.geoUnsupported": "இந்த சாதனத்தில் இருப்பிடம் ஆதரிக்கப்படவில்லை.",
+  "home.geoDenied": "உங்கள் இருப்பிடத்தைப் பெற முடியவில்லை. அணுகலை அனுமதித்து மீண்டும் முயற்சிக்கவும்.",
+  "home.shopWord": "கடை",
+  "home.shopsWord": "கடைகள்",
+  "home.shopsSuffix": "கடைகள்",
+  "home.loadingShops": "கடைகள் ஏற்றப்படுகிறது…",
+  "home.noShopsCategory": "இந்த வகையில் இன்னும் கடைகள் இல்லை.",
+  "home.noMatch": "உங்கள் வடிகட்டிகளுக்கு கடைகள் எதுவும் பொருந்தவில்லை.",
+  "home.resetFilters": "வடிகட்டிகளை மீட்டமை",
+  "home.closed": "மூடப்பட்டது",
+
+  // Shop detail
+  "shop.loading": "கடை ஏற்றப்படுகிறது…",
+  "shop.notFound": "கடை காணப்படவில்லை.",
+  "shop.openNow": "இப்போது திறந்துள்ளது",
+  "shop.menu": "மெனு",
+  "shop.items": "பொருட்கள்",
+  "shop.searchInShop": "இந்தக் கடையில் தேடுங்கள்…",
+  "shop.veg": "🟢 சைவம்",
+  "shop.nonVeg": "🔴 அசைவம்",
+  "shop.sort": "வரிசைப்படுத்து",
+  "shop.priceLowHigh": "₹ குறைவு→அதிகம்",
+  "shop.priceHighLow": "₹ அதிகம்→குறைவு",
+  "shop.noItems": "பொருட்கள் எதுவும் இல்லை.",
+  "shop.addPlus": "சேர் +",
+  "shop.per": "ஒன்றுக்கு",
+  "shop.itemsInCart": "பொருட்கள் கார்ட்டில்",
+  "shop.viewCart": "கார்ட்டைப் பார் →",
 
   // Cart
   "cart.title": "உங்கள் கார்ட்",
@@ -291,6 +435,323 @@ const ta = {
 
 export const DICTIONARIES = { en, hi, ta };
 
+// -----------------------------------------------------------------------------
+// Content (data) translations.
+//
+// The dictionaries above cover fixed UI labels, keyed by a dot-path. But most of
+// what a customer sees — shop names, food/product names, descriptions, category
+// and filter chip labels — comes from the database as free English text. To let
+// the whole app render in Hindi/Tamil we keep a second dictionary keyed by the
+// EXACT English string. `translateContent(lang, text)` returns the translation
+// when we have one and otherwise falls back to the original text, so untranslated
+// or newly-added data still renders (just in English) instead of going blank.
+// -----------------------------------------------------------------------------
+
+const contentTa = {
+  // Categories (utils.js CATEGORIES labels)
+  "All": "அனைத்தும்",
+  "Department": "டிபார்ட்மென்ட்",
+  "Medical": "மருத்துவம்",
+  "Stationery": "எழுதுபொருள்",
+  "Juice": "ஜூஸ்",
+  "Food": "உணவு",
+  "Grocery": "மளிகை",
+  "Other": "மற்றவை",
+
+  // Sub-category chips (Home SUBCATS labels, emoji included)
+  "🥗 Veg": "🥗 சைவம்",
+  "🍗 Non-veg": "🍗 அசைவம்",
+  "🍛 Meals": "🍛 மீல்ஸ்",
+  "🍢 Starters": "🍢 ஸ்டார்ட்டர்கள்",
+  "🍟 Snacks": "🍟 ஸ்நாக்ஸ்",
+  "🍪 Biscuits": "🍪 பிஸ்கட்கள்",
+  "🍫 Chocolate": "🍫 சாக்லேட்",
+  "🥣 Cereal": "🥣 சிரியல்",
+  "🧃 Beverages": "🧃 பானங்கள்",
+  "🌾 Staples": "🌾 அத்தியாவசியங்கள்",
+  "🧺 Household": "🧺 வீட்டு உபயோகம்",
+  "🍳 Kitchen": "🍳 சமையலறை",
+  "🧸 Toys & puzzles": "🧸 பொம்மைகள் & புதிர்கள்",
+  "✏️ Stationery": "✏️ எழுதுபொருள்",
+  "💊 Prescription": "💊 மருந்துச்சீட்டு",
+  "🩹 Wellness": "🩹 ஆரோக்கியம்",
+  "🍼 Baby care": "🍼 குழந்தை பராமரிப்பு",
+  "🎒 School": "🎒 பள்ளி",
+  "🖇️ Office": "🖇️ அலுவலகம்",
+  "🎨 Art": "🎨 கலை",
+  "📚 Books": "📚 புத்தகங்கள்",
+  "🧃 Fresh juice": "🧃 ஃபிரெஷ் ஜூஸ்",
+  "🥤 Smoothies": "🥤 ஸ்மூத்திகள்",
+  "🥛 Milkshakes": "🥛 மில்க்ஷேக்குகள்",
+
+  // Sort labels (Home SORTS)
+  "Recommended": "பரிந்துரைக்கப்பட்டது",
+  "Top rated": "அதிக மதிப்பீடு",
+  "Fastest": "வேகமானது",
+
+  // Shop names
+  "Ravi Department Store": "ரவி டிபார்ட்மென்ட் ஸ்டோர்",
+  "Meena Super Bazaar": "மீனா சூப்பர் பஜார்",
+  "City Medical & Pharmacy": "சிட்டி மெடிக்கல் & பார்மசி",
+  "HealthPlus Pharmacy": "ஹெல்த்பிளஸ் பார்மசி",
+  "Study Point Stationery": "ஸ்டடி பாயிண்ட் எழுதுபொருள்",
+  "Office Mart Supplies": "ஆஃபிஸ் மார்ட் சப்ளைஸ்",
+  "Fresh Juice Corner": "ஃபிரெஷ் ஜூஸ் கார்னர்",
+  "Cool Sips Juice Hub": "கூல் சிப்ஸ் ஜூஸ் ஹப்",
+  "Tasty Foods Restaurant": "டேஸ்டி ஃபுட்ஸ் ரெஸ்டாரன்ட்",
+  "Snack Shack Fast Food": "ஸ்நாக் ஷாக் ஃபாஸ்ட் ஃபுட்",
+  "Daily Fresh Grocery": "டெய்லி ஃபிரெஷ் மளிகை",
+  "SuperMart Grocery": "சூப்பர்மார்ட் மளிகை",
+
+  // Shop descriptions
+  "Daily needs, household & personal care under one roof.":
+    "தினசரி தேவைகள், வீட்டு உபயோகம் & தனிப்பட்ட பராமரிப்பு அனைத்தும் ஒரே இடத்தில்.",
+  "Value store for home essentials & cleaning supplies.":
+    "வீட்டு அத்தியாவசியங்கள் & சுத்தம் செய்யும் பொருட்களுக்கான மலிவு விலை கடை.",
+  "Prescription medicines, wellness & health devices.":
+    "மருந்துச்சீட்டு மருந்துகள், ஆரோக்கியம் & சுகாதார சாதனங்கள்.",
+  "24x7 chemist with home delivery of medicines.":
+    "மருந்துகளை வீட்டிற்கே வழங்கும் 24x7 மருந்தகம்.",
+  "Books, pens & everything for school and office.":
+    "பள்ளி மற்றும் அலுவலகத்திற்கான புத்தகங்கள், பேனாக்கள் & அனைத்தும்.",
+  "Bulk office stationery, printing & art materials.":
+    "மொத்த அலுவலக எழுதுபொருள், அச்சிடல் & கலைப் பொருட்கள்.",
+  "Cold-pressed juices, shakes & fruit bowls.":
+    "கோல்ட்-பிரஸ்டு ஜூஸ்கள், ஷேக்குகள் & பழ கிண்ணங்கள்.",
+  "Smoothies, mocktails & energy drinks.":
+    "ஸ்மூத்திகள், மாக்டெயில்கள் & எனர்ஜி பானங்கள்.",
+  "Hot South-Indian meals, biryani & tiffin.":
+    "சூடான தென்னிந்திய உணவு, பிரியாணி & டிஃபன்.",
+  "Burgers, rolls, pizza & quick bites.":
+    "பர்கர்கள், ரோல்கள், பிட்சா & விரைவு சிற்றுண்டி.",
+  "Fruits, vegetables, staples & dairy delivered fresh.":
+    "பழங்கள், காய்கறிகள், அத்தியாவசியங்கள் & பால் பொருட்கள் புத்தம் புதிதாக.",
+  "Rice, dal, oil, spices & packaged goods at best prices.":
+    "அரிசி, பருப்பு, எண்ணெய், மசாலா & பேக்கேஜ் பொருட்கள் சிறந்த விலையில்.",
+
+  // Product names
+  "Colgate Toothpaste 100g": "கோல்கேட் டூத்பேஸ்ட் 100g",
+  "Surf Excel Detergent 1kg": "சர்ஃப் எக்ஸெல் டிடர்ஜென்ட் 1kg",
+  "Dove Shampoo 340ml": "டவ் ஷாம்பு 340ml",
+  "Lifebuoy Soap (Pack of 4)": "லைஃப்பாய் சோப்பு (4 பேக்)",
+  "Vim Dishwash Gel 500ml": "விம் டிஷ்வாஷ் ஜெல் 500ml",
+  "Harpic Toilet Cleaner 1L": "ஹார்பிக் டாய்லெட் கிளீனர் 1L",
+  "Good Knight Refill": "குட் நைட் ரீஃபில்",
+  "Colin Glass Cleaner 500ml": "காலின் கிளாஸ் கிளீனர் 500ml",
+  "Scotch-Brite Scrub Pad": "ஸ்காட்ச்-பிரைட் ஸ்க்ரப் பேட்",
+  "Dettol Handwash 900ml": "டெட்டால் ஹேண்ட்வாஷ் 900ml",
+  "Garbage Bags (30 pcs)": "குப்பை பைகள் (30 துண்டுகள்)",
+  "Paracetamol 500mg Strip": "பாராசிட்டமால் 500mg ஸ்ட்ரிப்",
+  "Vitamin C Chewable (60)": "வைட்டமின் சி சூயபிள் (60)",
+  "Hand Sanitizer 200ml": "ஹேண்ட் சானிடைசர் 200ml",
+  "Digital Thermometer": "டிஜிட்டல் தெர்மோமீட்டர்",
+  "Cotton Roll 100g": "பஞ்சு ரோல் 100g",
+  "ORS Sachet (Pack of 5)": "ஓஆர்எஸ் சாஷே (5 பேக்)",
+  "Cetirizine Strip": "செட்ரிசின் ஸ்ட்ரிப்",
+  "Digital BP Monitor": "டிஜிட்டல் பிபி மானிட்டர்",
+  "N95 Mask (Pack of 5)": "N95 மாஸ்க் (5 பேக்)",
+  "Multivitamin Tablets (30)": "மல்டிவைட்டமின் மாத்திரைகள் (30)",
+  "Band-Aid (40 pcs)": "பேண்ட்-எய்ட் (40 துண்டுகள்)",
+  "Cello Ball Pen (Pack of 10)": "செலோ பால் பேனா (10 பேக்)",
+  "JK A4 Paper 500 sheets": "JK A4 பேப்பர் 500 தாள்கள்",
+  "Geometry Box": "ஜியோமெட்ரி பாக்ஸ்",
+  "Classmate Notebook (Pack of 6)": "கிளாஸ்மேட் நோட்புக் (6 பேக்)",
+  "Sticky Notes (5 pads)": "ஸ்டிக்கி நோட்ஸ் (5 பேட்)",
+  "Fevicol 200g": "ஃபெவிகால் 200g",
+  "Stapler + 1000 Pins": "ஸ்டேப்லர் + 1000 பின்கள்",
+  "Whiteboard Marker (Set of 4)": "வொயிட்போர்டு மார்க்கர் (4 செட்)",
+  "Faber-Castell Color Pencils": "ஃபேபர்-காஸ்டல் கலர் பென்சில்கள்",
+  "File Folders (Pack of 10)": "ஃபைல் ஃபோல்டர்கள் (10 பேக்)",
+  "Calculator 12-digit": "கால்குலேட்டர் 12-இலக்கம்",
+  "Fresh Orange Juice": "ஃபிரெஷ் ஆரஞ்சு ஜூஸ்",
+  "Mango Shake": "மாம்பழ ஷேக்",
+  "Watermelon Juice": "தர்பூசணி ஜூஸ்",
+  "Mixed Fruit Bowl": "கலவை பழ கிண்ணம்",
+  "Banana Shake": "வாழைப்பழ ஷேக்",
+  "Strawberry Smoothie": "ஸ்ட்ராபெர்ரி ஸ்மூத்தி",
+  "Blue Lagoon Mocktail": "புளூ லகூன் மாக்டெயில்",
+  "Lemon Mint Cooler": "எலுமிச்சை புதினா கூலர்",
+  "Cold Coffee": "கோல்ட் காஃபி",
+  "Pomegranate Juice": "மாதுளை ஜூஸ்",
+  "Veg Meals (Unlimited)": "வெஜ் மீல்ஸ் (அன்லிமிடெட்)",
+  "Chicken Biryani": "சிக்கன் பிரியாணி",
+  "Masala Dosa": "மசாலா தோசை",
+  "Paneer Butter Masala": "பன்னீர் பட்டர் மசாலா",
+  "Idli (4 pcs)": "இட்லி (4 துண்டுகள்)",
+  "Gulab Jamun (2 pcs)": "குலாப் ஜாமூன் (2 துண்டுகள்)",
+  "Veg Burger": "வெஜ் பர்கர்",
+  "Paneer Roll": "பன்னீர் ரோல்",
+  'Margherita Pizza (7")': 'மார்கெரிட்டா பிட்சா (7")',
+  "French Fries": "ஃபிரெஞ்ச் ஃபிரைஸ்",
+  "Chicken Momos (6)": "சிக்கன் மோமோஸ் (6)",
+  "Tomato 1kg": "தக்காளி 1kg",
+  "Onion 1kg": "வெங்காயம் 1kg",
+  "Potato 1kg": "உருளைக்கிழங்கு 1kg",
+  "Banana (Dozen)": "வாழைப்பழம் (டஜன்)",
+  "Amul Milk 1L": "அமுல் பால் 1L",
+  "Farm Eggs (Tray of 30)": "ஃபார்ம் முட்டைகள் (30 ட்ரே)",
+  "Sona Masoori Rice 5kg": "சோனா மசூரி அரிசி 5kg",
+  "Toor Dal 1kg": "துவரம் பருப்பு 1kg",
+  "Fortune Sunflower Oil 1L": "ஃபார்ச்சூன் சூரியகாந்தி எண்ணெய் 1L",
+  "Aashirvaad Atta 5kg": "ஆஷிர்வாத் ஆட்டா 5kg",
+  "Tata Salt 1kg": "டாடா உப்பு 1kg",
+  "Sugar 1kg": "சர்க்கரை 1kg",
+};
+
+const contentHi = {
+  // Categories
+  "All": "सभी",
+  "Department": "डिपार्टमेंट",
+  "Medical": "मेडिकल",
+  "Stationery": "स्टेशनरी",
+  "Juice": "जूस",
+  "Food": "खाना",
+  "Grocery": "किराना",
+  "Other": "अन्य",
+
+  // Sub-category chips
+  "🥗 Veg": "🥗 वेज",
+  "🍗 Non-veg": "🍗 नॉन-वेज",
+  "🍛 Meals": "🍛 मील्स",
+  "🍢 Starters": "🍢 स्टार्टर",
+  "🍟 Snacks": "🍟 स्नैक्स",
+  "🍪 Biscuits": "🍪 बिस्कुट",
+  "🍫 Chocolate": "🍫 चॉकलेट",
+  "🥣 Cereal": "🥣 सीरियल",
+  "🧃 Beverages": "🧃 पेय",
+  "🌾 Staples": "🌾 राशन",
+  "🧺 Household": "🧺 घरेलू",
+  "🍳 Kitchen": "🍳 रसोई",
+  "🧸 Toys & puzzles": "🧸 खिलौने & पहेली",
+  "✏️ Stationery": "✏️ स्टेशनरी",
+  "💊 Prescription": "💊 प्रिस्क्रिप्शन",
+  "🩹 Wellness": "🩹 वेलनेस",
+  "🍼 Baby care": "🍼 शिशु देखभाल",
+  "🎒 School": "🎒 स्कूल",
+  "🖇️ Office": "🖇️ ऑफिस",
+  "🎨 Art": "🎨 कला",
+  "📚 Books": "📚 किताबें",
+  "🧃 Fresh juice": "🧃 फ्रेश जूस",
+  "🥤 Smoothies": "🥤 स्मूदी",
+  "🥛 Milkshakes": "🥛 मिल्कशेक",
+
+  // Sort labels
+  "Recommended": "अनुशंसित",
+  "Top rated": "टॉप रेटेड",
+  "Fastest": "सबसे तेज़",
+
+  // Shop names
+  "Ravi Department Store": "रवि डिपार्टमेंट स्टोर",
+  "Meena Super Bazaar": "मीना सुपर बाज़ार",
+  "City Medical & Pharmacy": "सिटी मेडिकल & फार्मेसी",
+  "HealthPlus Pharmacy": "हेल्थप्लस फार्मेसी",
+  "Study Point Stationery": "स्टडी पॉइंट स्टेशनरी",
+  "Office Mart Supplies": "ऑफिस मार्ट सप्लाइज़",
+  "Fresh Juice Corner": "फ्रेश जूस कॉर्नर",
+  "Cool Sips Juice Hub": "कूल सिप्स जूस हब",
+  "Tasty Foods Restaurant": "टेस्टी फूड्स रेस्टोरेंट",
+  "Snack Shack Fast Food": "स्नैक शैक फास्ट फूड",
+  "Daily Fresh Grocery": "डेली फ्रेश किराना",
+  "SuperMart Grocery": "सुपरमार्ट किराना",
+
+  // Shop descriptions
+  "Daily needs, household & personal care under one roof.":
+    "रोज़मर्रा की ज़रूरतें, घरेलू और व्यक्तिगत देखभाल एक ही जगह।",
+  "Value store for home essentials & cleaning supplies.":
+    "घरेलू ज़रूरतों और सफाई सामग्री के लिए किफायती स्टोर।",
+  "Prescription medicines, wellness & health devices.":
+    "प्रिस्क्रिप्शन दवाइयाँ, वेलनेस और स्वास्थ्य उपकरण।",
+  "24x7 chemist with home delivery of medicines.":
+    "दवाइयों की होम डिलीवरी के साथ 24x7 केमिस्ट।",
+  "Books, pens & everything for school and office.":
+    "स्कूल और ऑफिस के लिए किताबें, पेन और सब कुछ।",
+  "Bulk office stationery, printing & art materials.":
+    "थोक ऑफिस स्टेशनरी, प्रिंटिंग और कला सामग्री।",
+  "Cold-pressed juices, shakes & fruit bowls.":
+    "कोल्ड-प्रेस्ड जूस, शेक और फ्रूट बाउल।",
+  "Smoothies, mocktails & energy drinks.":
+    "स्मूदी, मॉकटेल और एनर्जी ड्रिंक्स।",
+  "Hot South-Indian meals, biryani & tiffin.":
+    "गरमागरम दक्षिण-भारतीय भोजन, बिरयानी और टिफिन।",
+  "Burgers, rolls, pizza & quick bites.":
+    "बर्गर, रोल, पिज़्ज़ा और क्विक बाइट्स।",
+  "Fruits, vegetables, staples & dairy delivered fresh.":
+    "फल, सब्ज़ियाँ, राशन और डेयरी ताज़ा डिलीवर।",
+  "Rice, dal, oil, spices & packaged goods at best prices.":
+    "चावल, दाल, तेल, मसाले और पैकेज्ड सामान बेहतरीन दाम पर।",
+
+  // Product names
+  "Colgate Toothpaste 100g": "कोलगेट टूथपेस्ट 100g",
+  "Surf Excel Detergent 1kg": "सर्फ एक्सेल डिटर्जेंट 1kg",
+  "Dove Shampoo 340ml": "डव शैम्पू 340ml",
+  "Lifebuoy Soap (Pack of 4)": "लाइफबॉय साबुन (4 का पैक)",
+  "Vim Dishwash Gel 500ml": "विम डिशवॉश जेल 500ml",
+  "Harpic Toilet Cleaner 1L": "हार्पिक टॉयलेट क्लीनर 1L",
+  "Good Knight Refill": "गुड नाइट रिफिल",
+  "Colin Glass Cleaner 500ml": "कॉलिन ग्लास क्लीनर 500ml",
+  "Scotch-Brite Scrub Pad": "स्कॉच-ब्राइट स्क्रब पैड",
+  "Dettol Handwash 900ml": "डेटॉल हैंडवॉश 900ml",
+  "Garbage Bags (30 pcs)": "कचरा बैग (30 पीस)",
+  "Paracetamol 500mg Strip": "पैरासिटामोल 500mg स्ट्रिप",
+  "Vitamin C Chewable (60)": "विटामिन सी चुएबल (60)",
+  "Hand Sanitizer 200ml": "हैंड सैनिटाइज़र 200ml",
+  "Digital Thermometer": "डिजिटल थर्मामीटर",
+  "Cotton Roll 100g": "रूई रोल 100g",
+  "ORS Sachet (Pack of 5)": "ओआरएस सैशे (5 का पैक)",
+  "Cetirizine Strip": "सेट्रिज़िन स्ट्रिप",
+  "Digital BP Monitor": "डिजिटल बीपी मॉनिटर",
+  "N95 Mask (Pack of 5)": "N95 मास्क (5 का पैक)",
+  "Multivitamin Tablets (30)": "मल्टीविटामिन टैबलेट (30)",
+  "Band-Aid (40 pcs)": "बैंड-एड (40 पीस)",
+  "Cello Ball Pen (Pack of 10)": "सेलो बॉल पेन (10 का पैक)",
+  "JK A4 Paper 500 sheets": "JK A4 पेपर 500 शीट",
+  "Geometry Box": "ज्यामिति बॉक्स",
+  "Classmate Notebook (Pack of 6)": "क्लासमेट नोटबुक (6 का पैक)",
+  "Sticky Notes (5 pads)": "स्टिकी नोट्स (5 पैड)",
+  "Fevicol 200g": "फेविकोल 200g",
+  "Stapler + 1000 Pins": "स्टेपलर + 1000 पिन",
+  "Whiteboard Marker (Set of 4)": "व्हाइटबोर्ड मार्कर (4 का सेट)",
+  "Faber-Castell Color Pencils": "फेबर-कास्टेल कलर पेंसिल",
+  "File Folders (Pack of 10)": "फाइल फोल्डर (10 का पैक)",
+  "Calculator 12-digit": "कैलकुलेटर 12-अंक",
+  "Fresh Orange Juice": "फ्रेश ऑरेंज जूस",
+  "Mango Shake": "मैंगो शेक",
+  "Watermelon Juice": "तरबूज़ जूस",
+  "Mixed Fruit Bowl": "मिक्स्ड फ्रूट बाउल",
+  "Banana Shake": "बनाना शेक",
+  "Strawberry Smoothie": "स्ट्रॉबेरी स्मूदी",
+  "Blue Lagoon Mocktail": "ब्लू लैगून मॉकटेल",
+  "Lemon Mint Cooler": "लेमन मिंट कूलर",
+  "Cold Coffee": "कोल्ड कॉफी",
+  "Pomegranate Juice": "अनार जूस",
+  "Veg Meals (Unlimited)": "वेज मील्स (अनलिमिटेड)",
+  "Chicken Biryani": "चिकन बिरयानी",
+  "Masala Dosa": "मसाला डोसा",
+  "Paneer Butter Masala": "पनीर बटर मसाला",
+  "Idli (4 pcs)": "इडली (4 पीस)",
+  "Gulab Jamun (2 pcs)": "गुलाब जामुन (2 पीस)",
+  "Veg Burger": "वेज बर्गर",
+  "Paneer Roll": "पनीर रोल",
+  'Margherita Pizza (7")': 'मार्गरीटा पिज़्ज़ा (7")',
+  "French Fries": "फ्रेंच फ्राइज़",
+  "Chicken Momos (6)": "चिकन मोमोज़ (6)",
+  "Tomato 1kg": "टमाटर 1kg",
+  "Onion 1kg": "प्याज़ 1kg",
+  "Potato 1kg": "आलू 1kg",
+  "Banana (Dozen)": "केला (दर्जन)",
+  "Amul Milk 1L": "अमूल दूध 1L",
+  "Farm Eggs (Tray of 30)": "फार्म अंडे (30 की ट्रे)",
+  "Sona Masoori Rice 5kg": "सोना मसूरी चावल 5kg",
+  "Toor Dal 1kg": "तूर दाल 1kg",
+  "Fortune Sunflower Oil 1L": "फॉर्च्यून सनफ्लावर ऑयल 1L",
+  "Aashirvaad Atta 5kg": "आशीर्वाद आटा 5kg",
+  "Tata Salt 1kg": "टाटा नमक 1kg",
+  "Sugar 1kg": "चीनी 1kg",
+};
+
+// English is the base, so its content map is empty (text is returned as-is).
+export const CONTENT = { en: {}, hi: contentHi, ta: contentTa };
+
 // Look up a key for the active language, falling back to English, then to the
 // provided fallback, then to the key itself so nothing ever renders blank.
 export function translate(lang, key, fallback) {
@@ -298,4 +759,14 @@ export function translate(lang, key, fallback) {
   if (dict[key] !== undefined) return dict[key];
   if (DICTIONARIES[DEFAULT_LANG][key] !== undefined) return DICTIONARIES[DEFAULT_LANG][key];
   return fallback !== undefined ? fallback : key;
+}
+
+// Translate a piece of free (data) text — shop/product names, descriptions,
+// category & chip labels. Falls back to the original text when no translation
+// exists, so unknown/new strings still render (in English) instead of blank.
+export function translateContent(lang, text) {
+  if (text == null || text === "") return text;
+  const dict = CONTENT[lang];
+  if (dict && dict[text] !== undefined) return dict[text];
+  return text;
 }

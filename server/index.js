@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/db.js";
 import { notFound, errorHandler } from "./middleware/error.js";
+import Shop from "./models/Shop.js";
 
 import authRoutes from "./routes/auth.js";
 import shopRoutes from "./routes/shops.js";
@@ -151,8 +152,54 @@ const PORT = process.env.PORT || 5000;
 // connecting. Binding to 0.0.0.0 is required for Render's internal health check.
 app.listen(PORT, "0.0.0.0", () => console.log(`Server listening on port ${PORT}`));
 
+// Backfill shop coordinates for the "Near me" feature. Shops seeded before the
+// `geo` field existed have no lat/lng, so distance sorting silently no-ops.
+// This assigns deterministic ring-scattered coordinates around the city centre
+// to any shop missing valid finite geo. Idempotent: shops that already have
+// coordinates are left untouched, so it's safe to run on every startup.
+const GEO_CENTER = { lat: 17.385, lng: 78.4867 }; // Hyderabad
+
+function shopGeo(i, total) {
+  const angle = (i / Math.max(total, 1)) * 2 * Math.PI;
+  const radiusKm = 1.5 + (i % 5) * 1.8;
+  const latRad = (GEO_CENTER.lat * Math.PI) / 180;
+  const dLat = (radiusKm / 111) * Math.cos(angle);
+  const dLng = (radiusKm / (111 * Math.cos(latRad))) * Math.sin(angle);
+  return {
+    lat: +(GEO_CENTER.lat + dLat).toFixed(6),
+    lng: +(GEO_CENTER.lng + dLng).toFixed(6),
+  };
+}
+
+async function backfillShopGeo() {
+  const missing = await Shop.find({
+    $or: [
+      { geo: { $exists: false } },
+      { "geo.lat": { $exists: false } },
+      { "geo.lng": { $exists: false } },
+      { "geo.lat": null },
+      { "geo.lng": null },
+    ],
+  }).select("_id");
+  if (missing.length === 0) return;
+  const total = await Shop.countDocuments();
+  for (let i = 0; i < missing.length; i++) {
+    await Shop.updateOne(
+      { _id: missing[i]._id },
+      { $set: { geo: shopGeo(i, total) } }
+    );
+  }
+  console.log(`Backfilled geo coordinates for ${missing.length} shop(s).`);
+}
+
 // Connect to MongoDB in the background; a slow/failed DB connection must not
 // prevent the web process from opening its port.
-connectDB().catch((err) => {
-  console.error("Initial MongoDB connection failed:", err.message);
-});
+connectDB()
+  .then(() =>
+    backfillShopGeo().catch((err) =>
+      console.error("Shop geo backfill failed:", err.message)
+    )
+  )
+  .catch((err) => {
+    console.error("Initial MongoDB connection failed:", err.message);
+  });
