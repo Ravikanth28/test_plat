@@ -157,6 +157,21 @@ export default function OrderDetail() {
               <span className="ii">☎</span>
               <span className="muted">{order.phone}</span>
             </div>
+            {order.geo?.lat != null && order.geo?.lng != null && (
+              <div className="info-row">
+                <span className="ii">🗺️</span>
+                <a
+                  href={`https://www.google.com/maps?q=${order.geo.lat},${order.geo.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open pinned location on map
+                  {order.geo.accuracy
+                    ? ` (±${Math.round(order.geo.accuracy)}m)`
+                    : ""}
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

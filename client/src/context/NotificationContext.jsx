@@ -22,6 +22,7 @@ const TOKEN_KEY = "lm_token"; // JWT in localStorage (matches api.js)
 const SOUND_KEY = "lm_notif_sound"; // "off" disables the in-app chime
 const TONE_KEY = "lm_notif_tone"; // which tone preset to play
 const VOL_KEY = "lm_notif_volume"; // "0".."1"
+const VOICE_KEY = "lm_notif_voice"; // "on" reads new alerts aloud (opt-in)
 
 // Tone presets: each is a list of { f: frequency Hz, t: start offset seconds }.
 export const TONES = {
@@ -73,6 +74,27 @@ function playSound(toneKey = DEFAULT_TONE, volume = DEFAULT_VOLUME) {
   }
 }
 
+// Speak a short phrase aloud via the Web Speech API. FOREGROUND ONLY: browsers
+// block speech synthesis when no page is focused, so this never fires for a
+// closed app (background push shows an OS notification instead). Best-effort —
+// silently no-ops where speechSynthesis is unavailable.
+function speak(text, volume = DEFAULT_VOLUME) {
+  try {
+    if (typeof window === "undefined") return;
+    const synth = window.speechSynthesis;
+    if (!synth || !text) return;
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang = "en-IN";
+    u.rate = 1;
+    u.pitch = 1;
+    u.volume = Math.max(0, Math.min(1, volume));
+    synth.cancel(); // clear any stuck/queued utterance first
+    synth.speak(u);
+  } catch {
+    /* speech not available — ignore */
+  }
+}
+
 // Convert a base64 VAPID key into the Uint8Array the Push API expects.
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -119,6 +141,9 @@ export function NotificationProvider({ children }) {
     const v = Number(localStorage.getItem(VOL_KEY));
     return Number.isFinite(v) && v >= 0 && v <= 1 ? v : DEFAULT_VOLUME;
   });
+  const [voiceOn, setVoiceOn] = useState(
+    () => typeof localStorage !== "undefined" && localStorage.getItem(VOICE_KEY) === "on"
+  );
 
   // Server-synced preferences (mute / per-type / quiet hours).
   const [prefs, setPrefs] = useState(null);
@@ -134,6 +159,8 @@ export function NotificationProvider({ children }) {
   toneRef.current = tone;
   const volumeRef = useRef(volume);
   volumeRef.current = volume;
+  const voiceOnRef = useRef(voiceOn);
+  voiceOnRef.current = voiceOn;
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
 
@@ -157,6 +184,7 @@ export function NotificationProvider({ children }) {
     if (!n.read && allowInterrupt(prefsRef.current, n.type)) {
       setToast(n);
       if (soundOnRef.current) playSound(toneRef.current, volumeRef.current);
+      if (voiceOnRef.current) speak(n.title, volumeRef.current);
       clearTimeout(toastTimer.current);
       toastTimer.current = setTimeout(() => setToast(null), 6000);
     }
@@ -332,6 +360,23 @@ export function NotificationProvider({ children }) {
     playSound(toneRef.current, volumeRef.current);
   }, []);
 
+  // Spoken alerts (per-device, foreground only). Toggling on speaks a short
+  // confirmation — which also satisfies the browser's user-gesture requirement
+  // so later automatic utterances are allowed.
+  const toggleVoice = useCallback(() => {
+    setVoiceOn((on) => {
+      const next = !on;
+      try {
+        localStorage.setItem(VOICE_KEY, next ? "on" : "off");
+      } catch {
+        /* ignore */
+      }
+      if (next) speak("Voice alerts on", volumeRef.current);
+      else if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+      return next;
+    });
+  }, []);
+
   // --- Server-synced preferences --------------------------------------------
   const updatePrefs = useCallback(async (patch) => {
     setPrefs((prev) => ({ ...(prev || {}), ...patch })); // optimistic
@@ -408,6 +453,8 @@ export function NotificationProvider({ children }) {
         volume,
         setVolume,
         previewSound,
+        voiceOn,
+        toggleVoice,
         prefs,
         updatePrefs,
         refresh,

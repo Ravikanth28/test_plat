@@ -1,6 +1,6 @@
 // LocalMart service worker — enables installability (PWA) and basic offline.
 // Strategy: network-first for navigation & API, cache-first for static assets.
-const CACHE = "localmart-v4";
+const CACHE = "localmart-v5";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -66,6 +66,20 @@ function actionsFor(type) {
   return [];
 }
 
+// Time-sensitive types get a stickier alert: the banner stays on screen until
+// the user acts on it and the device vibrates with a stronger pattern. (The OS
+// still plays its own notification sound — a service worker cannot speak a
+// custom voice while the app is closed.)
+function isImportant(type) {
+  return (
+    type === "order_new" ||
+    type === "order_placed" ||
+    type === "order_status" ||
+    type === "order_cancelled" ||
+    type === "payment"
+  );
+}
+
 // Is any app window currently focused/visible? If so we skip the OS
 // notification and let the in-app toast (SSE) handle it — no duplicate alert.
 async function anyClientVisible() {
@@ -85,6 +99,7 @@ self.addEventListener("push", (event) => {
   }
   const title = data.title || "LocalMart";
   const type = data.type || "generic";
+  const important = isImportant(type);
   const options = {
     body: data.body || "",
     icon: "/icons/icon-192.png",
@@ -92,6 +107,8 @@ self.addEventListener("push", (event) => {
     data: { link: data.link || "/", type },
     tag: type, // collapse same-type notifications into one
     renotify: true,
+    requireInteraction: important, // stay until dismissed for key alerts
+    vibrate: important ? [200, 100, 200, 100, 200] : [100],
     actions: actionsFor(type),
   };
   event.waitUntil(

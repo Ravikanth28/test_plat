@@ -63,6 +63,8 @@ export default function NotificationsPage() {
     volume,
     setVolume,
     previewSound,
+    voiceOn,
+    toggleVoice,
     prefs,
     updatePrefs,
     enablePush,
@@ -237,6 +239,15 @@ export default function NotificationsPage() {
             </button>
           </div>
         </div>
+        <label className="notif-row">
+          <span>
+            <strong>Speak alerts aloud</strong>
+            <span className="muted small">
+              Reads new alerts out loud (works while the app is open)
+            </span>
+          </span>
+          <input type="checkbox" checked={voiceOn} onChange={toggleVoice} />
+        </label>
         <div className="notif-row">
           <span>
             <strong>Background push</strong>

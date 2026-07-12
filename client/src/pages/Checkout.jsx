@@ -17,6 +17,9 @@ export default function Checkout() {
   const [method, setMethod] = useState("cod");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [geo, setGeo] = useState(null); // { lat, lng, accuracy }
+  const [locating, setLocating] = useState(false);
+  const [locMsg, setLocMsg] = useState("");
 
   const total = itemsTotal + DELIVERY_FEE;
 
@@ -67,6 +70,45 @@ export default function Checkout() {
       rzp.open();
     });
 
+  // Capture the customer's GPS position (with permission) so the shop can find
+  // them precisely. Best-effort reverse-geocode fills the address if it's empty.
+  const useMyLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setLocMsg("Location isn't supported on this device.");
+      return;
+    }
+    setLocating(true);
+    setLocMsg("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        setGeo({ lat: latitude, lng: longitude, accuracy });
+        setLocating(false);
+        setLocMsg(`Location captured ✓ (±${Math.round(accuracy)}m)`);
+        if (!address.trim()) {
+          try {
+            const r = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const j = await r.json();
+            if (j?.display_name) setAddress(j.display_name);
+          } catch {
+            /* reverse geocode is optional — coords are still sent */
+          }
+        }
+      },
+      (err) => {
+        setLocating(false);
+        setLocMsg(
+          err.code === 1
+            ? "Permission denied — you can type the address instead."
+            : "Couldn't get your location. Please type the address."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   const placeOrder = async () => {
     setError("");
     if (!address.trim()) return setError("Please enter a delivery address.");
@@ -78,6 +120,7 @@ export default function Checkout() {
         deliveryAddress: address,
         phone,
         paymentMethod: method,
+        geo,
       });
 
       if (method === "online") {
@@ -122,6 +165,25 @@ export default function Checkout() {
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="House no, street, area, landmark..."
               />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={useMyLocation}
+                disabled={locating}
+                style={{ marginTop: 8 }}
+              >
+                {locating ? "Locating…" : "📍 Use my current location"}
+              </button>
+              {locMsg && (
+                <div className="muted small" style={{ marginTop: 6 }}>
+                  {locMsg}
+                </div>
+              )}
+              {geo && (
+                <div className="muted small" style={{ marginTop: 2 }}>
+                  Sharing precise location with the shop for faster delivery.
+                </div>
+              )}
             </div>
             <div className="field" style={{ marginBottom: 0 }}>
               <label>Phone Number</label>

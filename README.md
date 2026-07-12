@@ -29,6 +29,23 @@ Built with the **MERN** stack (MongoDB, Express, React, Node.js).
 - Change user roles, remove users
 - View every order across the platform
 
+### Notifications
+- **Real-time in-app alerts** over Server-Sent Events (SSE) — no refresh needed
+- **Bell dropdown** with unread badge, **toast popups**, and a **sound chime**
+- **Background Web Push** (VAPID) — alerts arrive even when the tab is closed,
+  with **action buttons**, **grouping**, and **deep-links** into the relevant page
+- Smart **focus suppression** (no duplicate push when the app is already open)
+- **Preferences** (synced across devices): mute-all, mute per notification type,
+  and **quiet hours**
+- **Sound settings** (per-device): pick a tone (chime / ding / triad / low) + volume
+- **Notification history** page with pagination
+- Live **tab-title counter** + **app-icon badge**
+
+### Platform / PWA
+- Installable **Progressive Web App** with a service worker
+- Responsive layout with **dark mode**
+- Keep-awake workflow to avoid Render cold starts
+
 ---
 
 ## 🧱 Tech Stack
@@ -150,6 +167,21 @@ This app deploys as a **single web service** — Express serves the built React 
 - **Start Command:** `npm start`
 - **Health Check Path:** `/api/health`
 - **Env vars:** `NODE_ENV=production`, `MONGO_URI`, `JWT_SECRET`, and optionally the Razorpay keys.
+
+### Enabling background push (optional)
+Web Push needs a VAPID key pair. Generate one with:
+```bash
+npx web-push generate-vapid-keys
+```
+Then set these on the **server** (Render dashboard) — the client fetches the
+public key at runtime, so no client rebuild is required:
+```env
+VAPID_PUBLIC_KEY=your-public-key
+VAPID_PRIVATE_KEY=your-private-key
+VAPID_SUBJECT=mailto:you@example.com
+```
+> If these are left blank, background push is simply skipped —
+> in-app (real-time) notifications keep working.
 
 > After the first deploy, run `npm run seed` locally (pointed at the same Atlas DB)
 > or via a Render one-off job to populate demo data.

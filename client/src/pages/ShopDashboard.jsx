@@ -107,6 +107,18 @@ export default function ShopDashboard() {
                   <div className="small">
                     <div>Customer: {o.customer?.name} ({o.customer?.phone})</div>
                     <div className="muted">📍 {o.deliveryAddress}</div>
+                    {o.geo?.lat != null && o.geo?.lng != null && (
+                      <div style={{ marginTop: 2 }}>
+                        <a
+                          href={`https://www.google.com/maps?q=${o.geo.lat},${o.geo.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          🗺️ Navigate to customer
+                          {o.geo.accuracy ? ` (±${Math.round(o.geo.accuracy)}m)` : ""}
+                        </a>
+                      </div>
+                    )}
                     <div style={{ marginTop: 6 }}>
                       {o.items.map((i, idx) => (
                         <div key={idx}>

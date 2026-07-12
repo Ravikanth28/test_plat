@@ -28,7 +28,7 @@ const STATUS_COPY = {
 // POST /api/orders  -> customer places an order
 router.post("/", protect, async (req, res, next) => {
   try {
-    const { items, shopId, deliveryAddress, phone, paymentMethod } = req.body;
+    const { items, shopId, deliveryAddress, phone, paymentMethod, geo } = req.body;
     if (!items || !items.length) {
       res.status(400);
       throw new Error("Cart is empty");
@@ -67,6 +67,16 @@ router.post("/", protect, async (req, res, next) => {
     const total = itemsTotal + DELIVERY_FEE;
     const method = paymentMethod === "online" ? "online" : "cod";
 
+    // Keep the shared coordinates only if they're valid numbers.
+    let location;
+    if (geo && Number.isFinite(Number(geo.lat)) && Number.isFinite(Number(geo.lng))) {
+      location = {
+        lat: Number(geo.lat),
+        lng: Number(geo.lng),
+        accuracy: Number.isFinite(Number(geo.accuracy)) ? Number(geo.accuracy) : undefined,
+      };
+    }
+
     const order = await Order.create({
       customer: req.user._id,
       shop: shop._id,
@@ -75,6 +85,7 @@ router.post("/", protect, async (req, res, next) => {
       deliveryFee: DELIVERY_FEE,
       total,
       deliveryAddress,
+      geo: location,
       phone: phone || req.user.phone,
       paymentMethod: method,
       paymentStatus: "pending",
@@ -99,7 +110,9 @@ router.post("/", protect, async (req, res, next) => {
     notify(shop.owner, {
       type: "order_new",
       title: "New order received",
-      body: `Order ${order.orderNo} • ₹${total} • ${orderItems.length} item(s)`,
+      body: `Order ${order.orderNo} • ₹${total} • ${orderItems.length} item(s)${
+        location ? " • 📍 location shared" : ""
+      }`,
       link: "/shop",
     });
     notify(req.user._id, {

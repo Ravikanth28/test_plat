@@ -31,6 +31,13 @@ const orderSchema = new mongoose.Schema(
     deliveryFee: { type: Number, default: 20 },
     total: { type: Number, required: true },
     deliveryAddress: { type: String, required: true },
+    // Optional GPS coordinates the customer shares at checkout so the shop can
+    // pinpoint the delivery spot on a map. Absent when permission is declined.
+    geo: {
+      lat: Number,
+      lng: Number,
+      accuracy: Number, // metres
+    },
     phone: { type: String, default: "" },
     paymentMethod: { type: String, enum: ["cod", "online"], default: "cod" },
     paymentStatus: {
