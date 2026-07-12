@@ -328,6 +328,22 @@ const run = async () => {
   let shopCount = 0;
   let productCount = 0;
 
+  // Scatter demo shops around a city centre so the "Near me" distance sort and
+  // distance badges have real coordinates to work with. Deterministic per index
+  // (rings of 1.5–8.7 km) so results are stable across re-seeds.
+  const GEO_CENTER = { lat: 17.385, lng: 78.4867 }; // Hyderabad
+  const shopGeo = (i, total) => {
+    const angle = (i / total) * 2 * Math.PI;
+    const radiusKm = 1.5 + (i % 5) * 1.8;
+    const latRad = (GEO_CENTER.lat * Math.PI) / 180;
+    const dLat = (radiusKm / 111) * Math.cos(angle);
+    const dLng = (radiusKm / (111 * Math.cos(latRad))) * Math.sin(angle);
+    return {
+      lat: Number((GEO_CENTER.lat + dLat).toFixed(6)),
+      lng: Number((GEO_CENTER.lng + dLng).toFixed(6)),
+    };
+  };
+
   for (const def of shopDefs) {
     const owner = await User.create({
       name: def.owner.name,
@@ -341,6 +357,7 @@ const run = async () => {
       owner: owner._id,
       isApproved: true,
       isOpen: true,
+      geo: shopGeo(shopCount, shopDefs.length),
     });
     owner.shop = shop._id;
     await owner.save();
